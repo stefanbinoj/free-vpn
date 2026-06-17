@@ -6,6 +6,7 @@
     "vpn:down": "npm --prefix server run vpn:down",
     "vpn:connect": "npm --prefix server run vpn:connect",
     "vpn:disconnect": "npm --prefix server run vpn:disconnect",
+    "vpn:config": "npm --prefix server run vpn:config",
     "vpn:status": "npm --prefix server run vpn:status",
     "vpn:qr": "npm --prefix server run vpn:qr",
     "vpn:app": "npm --prefix server run vpn:app"
