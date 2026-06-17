@@ -35,16 +35,18 @@ type DisconnectOptions = {
   bestEffort?: boolean;
 };
 
-function runDisconnect(command: string, args: string[], options: DisconnectOptions) {
+function tryDisconnect(command: string, args: string[], options: DisconnectOptions) {
   try {
     run(command, args);
+    return true;
   } catch (error) {
     if (!options.bestEffort) {
       throw error;
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    console.warn(`Local VPN disconnect failed, continuing cleanup: ${message}`);
+    console.warn(`Local VPN disconnect attempt failed, continuing cleanup: ${message}`);
+    return false;
   }
 }
 
@@ -53,12 +55,22 @@ export function disconnectLocalClient(options: DisconnectOptions = {}) {
 
   if ((os === "darwin" || os === "linux") && hasCommand("wg-quick")) {
     console.log("Disconnecting this device from the VPN...");
-    runDisconnect("sudo", ["wg-quick", "down", clientConfigPath], options);
-    return;
+    return tryDisconnect("sudo", ["wg-quick", "down", clientConfigPath], options);
   }
 
   if (os === "win32" && hasCommand("wireguard.exe")) {
     console.log("Disconnecting this Windows device from the VPN...");
-    runDisconnect("wireguard.exe", ["/uninstalltunnelservice", tunnelName], options);
+    const wireGuardStopped = tryDisconnect("wireguard.exe", ["/uninstalltunnelservice", tunnelName], options);
+
+    if (wireGuardStopped) {
+      return true;
+    }
+
+    const serviceName = `WireGuardTunnel$${tunnelName}`;
+    const serviceStopped = tryDisconnect("sc.exe", ["stop", serviceName], { bestEffort: true });
+    const serviceDeleted = tryDisconnect("sc.exe", ["delete", serviceName], { bestEffort: true });
+    return serviceStopped || serviceDeleted;
   }
+
+  return true;
 }
