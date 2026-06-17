@@ -20,7 +20,7 @@ function registerDestroyOnExit(stopHealthChecks: () => void) {
     console.log(`\nReceived ${signal}. Destroying Brazil VPN infrastructure...`);
 
     try {
-      disconnectLocalClient();
+      disconnectLocalClient({ bestEffort: true });
       terraform(["destroy", "-auto-approve"]);
       process.exit(0);
     } catch (error) {
@@ -61,7 +61,7 @@ export async function up() {
     console.error(message);
     collectServerDiagnostics(message);
     console.error("Setup failed after Terraform started. Destroying any created AWS resources...");
-    disconnectLocalClient();
+    disconnectLocalClient({ bestEffort: true });
     terraform(["destroy", "-auto-approve"]);
     throw error;
   }

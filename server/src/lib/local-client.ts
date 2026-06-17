@@ -31,17 +31,34 @@ export function connectLocalClient() {
   throw new Error(`Automatic local VPN connect is not implemented for this OS: ${os}`);
 }
 
-export function disconnectLocalClient() {
+type DisconnectOptions = {
+  bestEffort?: boolean;
+};
+
+function runDisconnect(command: string, args: string[], options: DisconnectOptions) {
+  try {
+    run(command, args);
+  } catch (error) {
+    if (!options.bestEffort) {
+      throw error;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`Local VPN disconnect failed, continuing cleanup: ${message}`);
+  }
+}
+
+export function disconnectLocalClient(options: DisconnectOptions = {}) {
   const os = platform();
 
   if ((os === "darwin" || os === "linux") && hasCommand("wg-quick")) {
     console.log("Disconnecting this device from the VPN...");
-    run("sudo", ["wg-quick", "down", clientConfigPath]);
+    runDisconnect("sudo", ["wg-quick", "down", clientConfigPath], options);
     return;
   }
 
   if (os === "win32" && hasCommand("wireguard.exe")) {
     console.log("Disconnecting this Windows device from the VPN...");
-    run("wireguard.exe", ["/uninstalltunnelservice", tunnelName]);
+    runDisconnect("wireguard.exe", ["/uninstalltunnelservice", tunnelName], options);
   }
 }

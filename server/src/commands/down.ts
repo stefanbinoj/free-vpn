@@ -4,7 +4,7 @@ import { assertClockIsSynced } from "../lib/clock.js";
 
 export async function down() {
   await assertClockIsSynced();
-  disconnectLocalClient();
+  disconnectLocalClient({ bestEffort: true });
   console.log("Destroying Brazil VPN infrastructure...");
   terraform(["destroy", "-auto-approve"]);
 }
