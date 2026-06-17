@@ -2,6 +2,7 @@ import { terraform } from "../lib/terraform.js";
 import { disconnectLocalClient } from "../lib/local-client.js";
 import { assertClockIsSynced } from "../lib/clock.js";
 import { platform } from "node:os";
+import { assertAwsCredentialsLookValid } from "../lib/aws-credentials.js";
 
 export async function down() {
   const disconnected = disconnectLocalClient({ bestEffort: true });
@@ -17,6 +18,7 @@ export async function down() {
   }
 
   await assertClockIsSynced();
+  assertAwsCredentialsLookValid();
   console.log("Destroying Brazil VPN infrastructure...");
   terraform(["destroy", "-auto-approve"]);
 }

@@ -6,6 +6,7 @@ import { ensureSshKeyPair } from "../lib/ssh-key.js";
 import { startHealthChecks, waitForever } from "../lib/health.js";
 import { connectLocalClient, disconnectLocalClient } from "../lib/local-client.js";
 import { assertClockIsSynced } from "../lib/clock.js";
+import { assertAwsCredentialsLookValid } from "../lib/aws-credentials.js";
 
 function registerDestroyOnExit(stopHealthChecks: () => void) {
   let isDestroying = false;
@@ -43,6 +44,7 @@ export async function up() {
   }
 
   await assertClockIsSynced();
+  assertAwsCredentialsLookValid();
   await ensureSshKeyPair();
 
   console.log("Starting Brazil VPN infrastructure...");
