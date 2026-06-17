@@ -1,15 +1,26 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { clientConfigPath, logsDir } from "./paths.js";
-import { hasCommand, run } from "./shell.js";
+import { findCommand, run } from "./shell.js";
 import { getOutputs } from "./terraform.js";
 
 const wireguardPort = 51820;
 const clientVpnIp = "10.8.0.2/32";
 
+function wireGuardCli() {
+  const command = findCommand(["wg", "wg.exe"]);
+
+  if (!command) {
+    throw new Error("wg is required locally to generate WireGuard keys. Install WireGuard tools and ensure wg is on PATH.");
+  }
+
+  return command;
+}
+
 export function generateKeyPair() {
-  const privateKey = run("wg", ["genkey"], { quiet: true });
-  const publicKey = run("wg", ["pubkey"], { input: `${privateKey}\n`, quiet: true });
+  const command = wireGuardCli();
+  const privateKey = run(command, ["genkey"], { quiet: true });
+  const publicKey = run(command, ["pubkey"], { input: `${privateKey}\n`, quiet: true });
 
   return { privateKey, publicKey };
 }
@@ -145,10 +156,6 @@ export async function waitForWireGuardReady(timeoutMs = 300_000) {
 }
 
 export function configureClient(): string {
-  if (!hasCommand("wg")) {
-    throw new Error("wg is required locally to generate WireGuard keys. Install wireguard-tools.");
-  }
-
   const outputs = getOutputs();
   const client = generateKeyPair();
   const serverPublicKey = ssh([], "sudo cat /etc/wireguard/server_public.key");

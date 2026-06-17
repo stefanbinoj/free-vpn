@@ -1,6 +1,6 @@
 import { collectServerDiagnostics, configureClient, waitForWireGuardReady } from "../lib/wireguard.js";
 import { terraform } from "../lib/terraform.js";
-import { hasCommand } from "../lib/shell.js";
+import { findCommand, hasCommand } from "../lib/shell.js";
 import { clientConfigPath } from "../lib/paths.js";
 import { ensureSshKeyPair } from "../lib/ssh-key.js";
 import { startHealthChecks, waitForever } from "../lib/health.js";
@@ -38,7 +38,7 @@ export async function up() {
   if (!hasCommand("terraform")) {
     throw new Error("terraform is required on PATH.");
   }
-  if (!hasCommand("wg")) {
+  if (!findCommand(["wg", "wg.exe"])) {
     throw new Error("wg is required locally to generate WireGuard keys. Install wireguard-tools.");
   }
 

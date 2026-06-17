@@ -38,3 +38,7 @@ export function hasCommand(command: string): boolean {
 
   return result.status === 0;
 }
+
+export function findCommand(commands: string[]): string | undefined {
+  return commands.find((command) => hasCommand(command));
+}
