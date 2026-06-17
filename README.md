@@ -20,11 +20,7 @@ Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil. Almo
    <details>
    <summary>Windows</summary>
 
-   ```powershell
-   winget install Hashicorp.Terraform
-   ```
-
-   Alternatively, download the Windows binary from https://developer.hashicorp.com/terraform/install, extract `terraform.exe` to a folder of your choice (e.g. `C:\terraform`), and add that folder to your `PATH`.
+   download the Windows binary from https://developer.hashicorp.com/terraform/install, extract `terraform.exe` to a folder of your choice (e.g. `C:\terraform`), and add that folder to your `PATH`.
 
    </details>
 

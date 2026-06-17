@@ -175,6 +175,11 @@ export function configureClient(): string {
     ].join(" "),
   );
 
+  const registeredPeer = ssh([], `sudo wg show wg0 peers | grep -Fx ${client.publicKey} || true`);
+  if (registeredPeer !== client.publicKey) {
+    throw new Error("Generated client peer was not registered on the WireGuard server.");
+  }
+
   const config = `[Interface]
 PrivateKey = ${client.privateKey}
 Address = ${clientVpnIp}
@@ -183,7 +188,7 @@ DNS = 1.1.1.1
 [Peer]
 PublicKey = ${serverPublicKey}
 Endpoint = ${outputs.serverIp}:${wireguardPort}
-AllowedIPs = 0.0.0.0/0, ::/0
+AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
 `;
 
