@@ -1,111 +1,112 @@
-# FIFA VPN
+# Self-Hosted VPN (for watching FIFA highlights via yt)
 
-Personal WireGuard VPN that exits from an AWS EC2 instance in Brazil (`sa-east-1`).
+Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil. Almost zero cost.
 
-The actual VPN is WireGuard. Node.js is only the local control layer around Terraform, SSH, config generation, QR output, and health checks.
+## Setup
 
-Terraform creates a dedicated tiny AWS network for the instance: VPC, public subnet, internet gateway, route table, security group, EC2 key pair, and one EC2 instance. It does not create a load balancer, database, NAT gateway, static IP, or public Node.js service.
+1. Install Node.js.
+2. Install Terraform.
+   **macOS**
+   ```bash
+   brew tap hashicorp/tap
+   brew install hashicorp/tap/terraform
+   ```
 
-## Requirements
+   **Windows**
+   ```powershell
+   winget install Hashicorp.Terraform
+   ```
+   Alternatively, download the Windows binary from https://developer.hashicorp.com/terraform/install, extract `terraform.exe` to a folder of your choice (e.g. `C:\terraform`), and add that folder to your `PATH`.
 
-- AWS credentials configured locally.
-- Terraform `>= 1.6`.
-- Node.js `>= 20`.
-- Local WireGuard tools with `wg` available on PATH.
-- An SSH key pair generated locally.
+   **Ubuntu / Debian**
+   ```bash
+   wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+   sudo apt update && sudo apt install terraform
+   ```
+3. Install WireGuard tools.
+   **macOS**
+   ```bash
+   brew install wireguard-tools
+   ```
 
-## SSH Key Flow
+   **Windows**
+   Download and run the official installer from https://download.wireguard.com/windows-client/wireguard-installer.exe. `wg.exe` is installed under `C:\Program Files\WireGuard\` — add this folder to your `PATH` to use it from any terminal, or call it by full path.
 
-This project follows the safe key ownership model:
+   **Ubuntu / Debian**
+   ```bash
+   sudo apt install wireguard
+   ```
+4. Install the VS Code CLI (`code` command).
+   **macOS**
+   ```bash
+   brew install --cask visual-studio-code
+   ```
+   Then open VS Code, press **Cmd+Shift+P**, and run **Shell Command: Install 'code' command in PATH**. Restart your terminal afterwards.
 
-1. Generate an SSH key locally.
-2. Give AWS only the public key.
-3. Terraform creates an EC2 key pair from that public key.
-4. EC2 boots with that public key installed for the default `ubuntu` user.
-5. Your local private key is used to SSH into the instance.
+   **Windows**
+   Download the User Installer from https://code.visualstudio.com/ — it adds `code` to your `PATH` automatically. Restart your terminal afterwards.
+   Or: `winget install Microsoft.VisualStudioCode`
 
-Generate the key:
+   **Ubuntu / Debian**
+   ```bash
+   wget -qO- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | sudo tee /etc/apt/sources.list.d/vscode.list
+   sudo apt update && sudo apt install code
+   ```
+   Or via Snap: `sudo snap install --classic code`
+5. Configure AWS credentials locally.
+go to AWS console -> IAM > Create User > Attach policies directly > Add `AmazonEC2FullAccess, AmazonSSMReadOnlyAccess` > Create user >
+go to Security credentials tab > Create access key > Show access key > Copy Access Key ID and Secret Access Key.
+
+Use `.env`:
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/fifa-vpn -C "fifa-vpn"
+cp .env.example .env
 ```
 
-Terraform defaults to reading:
-
-```text
-~/.ssh/fifa-vpn.pub
-```
-
-## Configure
-
-Copy the example values if you want to override defaults:
+Then edit `.env`:
 
 ```bash
-cd infra
-cp terraform.tfvars.example terraform.tfvars
+AWS_ACCESS_KEY_ID=your-access-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-access-key
+AWS_DEFAULT_REGION=sa-east-1
 ```
 
-Most important variables:
-
-```hcl
-cloud_provider = "aws"
-region         = "sa-east-1"
-instance_type  = "t3.micro"
-use_spot       = false
-```
-
-The SSH public key path is fixed at `~/.ssh/fifa-vpn.pub`. The instance name, WireGuard port, tunnel IPs, VPC CIDRs, and disk size are intentionally hardcoded because this is a one-person disposable VPN, not a reusable infrastructure module.
-
-Set `use_spot = true` to request a Spot Instance instead of On-Demand. Spot is usually cheaper, but AWS can interrupt the instance and terminate your VPN session.
-
-## Commands
+## Run
 
 Install the local CLI dependencies:
 
 ```bash
-npm --prefix server install
+cd server
+npm install
 ```
 
-Start the VPS and generate a local WireGuard config:
+The Terraform config works out of the box. If you want to override anything, copy the example file (Optional)
 
 ```bash
+cd ../infra
+cp terraform.tfvars.example terraform.tfvars
+```
+
+Start the VPN:
+
+```bash
+cd ..
 npm run vpn:up
 ```
 
-Show status:
-
-```bash
-npm run vpn:status
-```
-
-Print a QR code for the WireGuard mobile app:
-
-```bash
-npm run vpn:qr
-```
-
-Run foreground health checks every 5-10 seconds:
-
-```bash
-npm run vpn:app
-```
-
-Destroy the VPS:
 
 ```bash
 npm run vpn:down
 ```
 
-## Security Notes
+**Pro Tip**
 
-- Do not commit private keys, WireGuard configs, `.env`, or Terraform state.
-- The VPS only exposes SSH and WireGuard UDP.
-- SSH is publicly reachable, but key-only login is enforced and the private key stays local.
-- No public Node.js server runs on the VPS.
-- Root disk encryption is enabled.
-- EC2 instance metadata requires IMDSv2.
-- Password SSH login and root SSH login are disabled by cloud-init.
+Use these browser extensions for a cleaner viewing experience:
 
-## Cost Notes
+- Unhook
+- uBlock Origin
 
-The default `t3.micro` is used because it is free-tier eligible for this setup. WireGuard for one person is light; network quality and provider bandwidth matter more than CPU or RAM.
+
+**Use this at your own risk.** I am not responsible for any shit that you create (ZEE5 ofc.)

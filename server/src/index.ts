@@ -1,8 +1,13 @@
+import { config } from "dotenv";
+import { resolve } from "node:path";
 import { app } from "./commands/app.js";
 import { down } from "./commands/down.js";
 import { qr } from "./commands/qr.js";
 import { status } from "./commands/status.js";
 import { up } from "./commands/up.js";
+import { repoRoot } from "./lib/paths.js";
+
+config({ path: resolve(repoRoot, ".env") });
 
 const command = process.argv[2];
 

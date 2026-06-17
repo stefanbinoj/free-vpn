@@ -3,6 +3,33 @@ import { terraform } from "../lib/terraform.js";
 import { hasCommand } from "../lib/shell.js";
 import { clientConfigPath } from "../lib/paths.js";
 import { ensureSshKeyPair } from "../lib/ssh-key.js";
+import { startHealthChecks, waitForever } from "../lib/health.js";
+
+function registerDestroyOnExit(stopHealthChecks: () => void) {
+  let isDestroying = false;
+
+  const destroy = (signal: NodeJS.Signals) => {
+    if (isDestroying) {
+      return;
+    }
+
+    isDestroying = true;
+    stopHealthChecks();
+    console.log(`\nReceived ${signal}. Destroying Brazil VPN infrastructure...`);
+
+    try {
+      terraform(["destroy", "-auto-approve"]);
+      process.exit(0);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(message);
+      process.exit(1);
+    }
+  };
+
+  process.once("SIGINT", destroy);
+  process.once("SIGTERM", destroy);
+}
 
 export async function up() {
   if (!hasCommand("terraform")) {
@@ -21,4 +48,8 @@ export async function up() {
   console.log("Generating local WireGuard client config...");
   configureClient();
   console.log(`Client config written to ${clientConfigPath}`);
+
+  const stopHealthChecks = startHealthChecks();
+  registerDestroyOnExit(stopHealthChecks);
+  await waitForever();
 }
