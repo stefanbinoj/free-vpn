@@ -105,8 +105,22 @@ cd ..
 npm run vpn:up
 ```
 
+This creates the AWS server, generates `configs/wg-client.conf`, and connects this Mac using `wg-quick`. macOS may ask for your password because VPN routes require `sudo`.
+
+Reconnect only the local Mac client:
+
+```bash
+npm run vpn:connect
+```
+
+Disconnect only the local Mac client:
+
+```bash
+npm run vpn:disconnect
+```
 
 Make sure to destory all resources after use to avoid any unexpected costs
+
 ```bash
 npm run vpn:down
 ```
@@ -121,5 +135,6 @@ Use these browser extensions for a cleaner viewing experience:
 **NOTE:**
 - It might take a few minutes for provisioning the VPN.
 - Pls dont forget to run `npm run vpn:down` after you are done using the VPN to avoid any unexpected costs.
+- Never panic if it gets error/stuck just run `npm run vpn:down` it wont cost you even a penny!
 
 **Use this at your own risk. I am not responsible for any shit that you create (ZEE5 ofc.)

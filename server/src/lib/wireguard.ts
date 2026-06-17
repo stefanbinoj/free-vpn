@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { clientConfigPath } from "./paths.js";
+import { clientConfigPath, logsDir } from "./paths.js";
 import { hasCommand, run } from "./shell.js";
 import { getOutputs } from "./terraform.js";
 
@@ -35,16 +35,69 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function waitForWireGuardReady(timeoutMs = 180_000) {
+function timestamp() {
+  return new Date().toISOString().replace(/[:.]/g, "-");
+}
+
+export function collectServerDiagnostics(reason: string): string | undefined {
+  try {
+    const outputs = getOutputs();
+    mkdirSync(logsDir, { recursive: true });
+    const logPath = `${logsDir}/vpn-debug-${timestamp()}.log`;
+    const diagnostics = ssh(
+      [
+        "-o",
+        "ConnectTimeout=8",
+        "-o",
+        "ConnectionAttempts=1",
+        "-o",
+        "BatchMode=yes",
+      ],
+      [
+        "echo '=== reason ==='",
+        `echo '${reason.replace(/'/g, "'\\''")}'`,
+        "echo '=== server ==='",
+        `echo '${outputs.sshUser}@${outputs.serverIp}'`,
+        "echo '=== cloud-init status ==='",
+        "cloud-init status --long || true",
+        "echo '=== cloud-init output tail ==='",
+        "sudo tail -n 200 /var/log/cloud-init-output.log || true",
+        "echo '=== cloud-init log tail ==='",
+        "sudo tail -n 200 /var/log/cloud-init.log || true",
+        "echo '=== wg service ==='",
+        "systemctl status wg-quick@wg0 --no-pager || true",
+        "echo '=== wg show ==='",
+        "sudo wg show || true",
+        "echo '=== wireguard files ==='",
+        "sudo ls -la /etc/wireguard || true",
+        "echo '=== wg0 config without private key ==='",
+        "sudo sed 's/^PrivateKey = .*/PrivateKey = [redacted]/' /etc/wireguard/wg0.conf || true",
+        "echo '=== network ==='",
+        "ip route || true",
+      ].join(" ; "),
+    );
+
+    writeFileSync(logPath, diagnostics);
+    console.error(`Saved server diagnostics to ${logPath}`);
+    return logPath;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Could not collect server diagnostics: ${message}`);
+    return undefined;
+  }
+}
+
+export async function waitForWireGuardReady(timeoutMs = 300_000) {
   const startedAt = Date.now();
   const retryDelayMs = 5_000;
   let lastError = "";
+  let lastProgress = "";
 
   console.log("Waiting for cloud-init and WireGuard to finish bootstrapping...");
 
   while (Date.now() - startedAt < timeoutMs) {
     try {
-      ssh(
+      const progress = ssh(
         [
           "-o",
           "ConnectTimeout=5",
@@ -54,17 +107,36 @@ export async function waitForWireGuardReady(timeoutMs = 180_000) {
           "BatchMode=yes",
         ],
         [
-          "cloud-init status --wait >/dev/null",
-          "&&",
-          "test -s /etc/wireguard/server_public.key",
-          "&&",
-          "systemctl is-active --quiet wg-quick@wg0",
-        ].join(" "),
+          "printf 'cloud_init='",
+          "cloud-init status --long 2>/dev/null | tr '\\n' ' ' || true",
+          "printf '\\nserver_key='",
+          "sudo test -s /etc/wireguard/server_public.key && printf present || printf missing",
+          "printf '\\nwg_interface='",
+          "sudo wg show wg0 >/dev/null 2>&1 && printf present || printf missing",
+          "printf '\\nwg_service='",
+          "systemctl is-active wg-quick@wg0 2>/dev/null || true",
+        ].join(" ; "),
       );
-      console.log("WireGuard server is ready.");
-      return;
+
+      if (progress !== lastProgress) {
+        console.log(progress);
+        lastProgress = progress;
+      }
+
+      const keyPresent = progress.includes("server_key=present");
+      const interfacePresent = progress.includes("wg_interface=present");
+      const cloudInitDone = progress.includes("status: done");
+
+      if (cloudInitDone && keyPresent && interfacePresent) {
+        console.log("WireGuard server is ready.");
+        return;
+      }
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
+      if (lastError !== lastProgress) {
+        console.log("Waiting for SSH to become reachable...");
+        lastProgress = lastError;
+      }
       await sleep(retryDelayMs);
     }
   }

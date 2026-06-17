@@ -17,3 +17,4 @@ override.tf.json
 *.conf
 .env
 configs/
+logs/

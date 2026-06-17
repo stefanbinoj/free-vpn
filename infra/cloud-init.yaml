@@ -36,6 +36,5 @@ runcmd:
     PRIVATE_KEY="$(cat /etc/wireguard/server_private.key)"
     sed -i "s|SERVER_PRIVATE_KEY_PLACEHOLDER|$PRIVATE_KEY|g" /etc/wireguard/wg0.conf
   - chmod 600 /etc/wireguard/wg0.conf
-  - wg-quick up wg0
-  - systemctl enable wg-quick@wg0
+  - systemctl enable --now wg-quick@wg0
   - systemctl reload ssh

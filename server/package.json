@@ -5,6 +5,8 @@
   "scripts": {
     "vpn:up": "tsx src/index.ts up",
     "vpn:down": "tsx src/index.ts down",
+    "vpn:connect": "tsx src/index.ts connect",
+    "vpn:disconnect": "tsx src/index.ts disconnect",
     "vpn:status": "tsx src/index.ts status",
     "vpn:qr": "tsx src/index.ts qr",
     "vpn:app": "tsx src/index.ts app"
