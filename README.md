@@ -20,21 +20,17 @@ Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil. Almo
    <details>
    <summary>Windows</summary>
 
-   download the Windows binary from https://developer.hashicorp.com/terraform/install, extract `terraform.exe` to a folder of your choice (e.g. `C:\terraform`), and add that folder to your `PATH`.
+   *Download the Windows binary from https://developer.hashicorp.com/terraform/install#windows, extract `terraform.exe` to a folder of your choice (e.g. `C:\terraform`), and add that folder to your `PATH`.*
 
    </details>
 
    <details>
    <summary>Ubuntu / Debian</summary>
 
-   ```bash
-   wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-   sudo apt update && sudo apt install terraform
-   ```
+   *visit offical docs : https://developer.hashicorp.com/terraform/install#linux*
 
    </details>
-3. Install WireGuard tools.
+3. Install WireGuard cli.
 
    <details>
    <summary>macOS</summary>
@@ -48,7 +44,7 @@ Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil. Almo
    <details>
    <summary>Windows</summary>
 
-   Download and run the official installer from https://download.wireguard.com/windows-client/wireguard-installer.exe. `wg.exe` is installed under `C:\Program Files\WireGuard\` — add this folder to your `PATH` to use it from any terminal, or call it by full path.
+   *Download and run the official installer from https://download.wireguard.com/windows-client/wireguard-installer.exe. `wg.exe` is installed under `C:\Program Files\WireGuard\` — add this folder to your `PATH` to use it from any terminal, or call it by full path.*
 
    </details>
 
@@ -64,15 +60,11 @@ Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil. Almo
 
    Go to AWS console > IAM > Create User > Attach policies directly > Add `AmazonEC2FullAccess, AmazonSSMReadOnlyAccess` > Create user > Security credentials tab > Create access key > Show access key > Copy Access Key ID and Secret Access Key.
 
-   Use `.env`:
-
    ```bash
    cp .env.example .env
-   ```
 
-   Then edit `.env`:
 
-   ```bash
+   # Add these credentails to .env
    AWS_ACCESS_KEY_ID=your-access-key-id
    AWS_SECRET_ACCESS_KEY=your-secret-access-key
    AWS_DEFAULT_REGION=sa-east-1
@@ -87,7 +79,7 @@ cd server
 npm install
 ```
 
-The Terraform config works out of the box. (Optional) Terraform works by default. If you need any further configuration, follow this step.
+**[Optional]**The Terraform config works out of the box. If you need any further custom configs, follow this step.
 
 ```bash
 cd ../infra
@@ -101,26 +93,18 @@ cd ..
 npm run vpn:up
 ```
 
-This creates the AWS server, generates `configs/wg-client.conf`, and connects the current device.
+<summary>
+This creates the VPN server in brazil region of AWS, generates `configs/wg-client.conf`, and connects the current device.
+</summary>
 
+<details>
 - macOS / Linux: uses `sudo wg-quick up configs/wg-client.conf`
 - Windows: uses `wireguard.exe /installtunnelservice`
 
 macOS and Linux may ask for your password because VPN routes require `sudo`. Windows may need an Administrator terminal.
+</details>
 
-Reconnect only the local client:
-
-```bash
-npm run vpn:connect
-```
-
-Disconnect only the local client:
-
-```bash
-npm run vpn:disconnect
-```
-
-Make sure to destory all resources after use to avoid any unexpected costs
+Make sure to destory all resources after use to avoid any **unexpected costs**
 
 ```bash
 npm run vpn:down
@@ -132,6 +116,7 @@ Use these browser extensions for a cleaner viewing experience:
 
 - Unhook
 - uBlock Origin
+- Visit kaze tv (yt channel) for viewing.
 
 **NOTE:**
 - It might take a few minutes for provisioning the VPN.
