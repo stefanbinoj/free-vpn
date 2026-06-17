@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { platform } from "node:os";
 
 type RunOptions = {
   cwd?: string;
@@ -23,9 +24,13 @@ export function run(command: string, args: string[], options: RunOptions = {}): 
 }
 
 export function hasCommand(command: string): boolean {
-  const result = spawnSync("sh", ["-lc", `command -v ${command}`], {
+  const isWindows = platform() === "win32";
+  const lookupCommand = isWindows ? "where" : "sh";
+  const lookupArgs = isWindows ? [command] : ["-lc", `command -v ${command}`];
+  const result = spawnSync(lookupCommand, lookupArgs, {
     encoding: "utf8",
     stdio: "ignore",
+    shell: isWindows,
   });
 
   return result.status === 0;
