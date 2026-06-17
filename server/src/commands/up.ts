@@ -5,6 +5,7 @@ import { clientConfigPath } from "../lib/paths.js";
 import { ensureSshKeyPair } from "../lib/ssh-key.js";
 import { startHealthChecks, waitForever } from "../lib/health.js";
 import { connectLocalClient, disconnectLocalClient } from "../lib/local-client.js";
+import { assertClockIsSynced } from "../lib/clock.js";
 
 function registerDestroyOnExit(stopHealthChecks: () => void) {
   let isDestroying = false;
@@ -41,6 +42,7 @@ export async function up() {
     throw new Error("wg is required locally to generate WireGuard keys. Install wireguard-tools.");
   }
 
+  await assertClockIsSynced();
   await ensureSshKeyPair();
 
   console.log("Starting Brazil VPN infrastructure...");
