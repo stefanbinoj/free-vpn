@@ -64,57 +64,23 @@ Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil. Almo
    ```
 
    </details>
-4. Install the VS Code CLI (`code` command).
+4. Configure AWS credentials locally.
 
-   <details>
-   <summary>macOS</summary>
+   Go to AWS console > IAM > Create User > Attach policies directly > Add `AmazonEC2FullAccess, AmazonSSMReadOnlyAccess` > Create user > Security credentials tab > Create access key > Show access key > Copy Access Key ID and Secret Access Key.
 
-   ```bash
-   brew install --cask visual-studio-code
-   ```
-
-   Then open VS Code, press **Cmd+Shift+P**, and run **Shell Command: Install 'code' command in PATH**. Restart your terminal afterwards.
-
-   </details>
-
-   <details>
-   <summary>Windows</summary>
-
-   Download the User Installer from https://code.visualstudio.com/ — it adds `code` to your `PATH` automatically. Restart your terminal afterwards.
-
-   Or: `winget install Microsoft.VisualStudioCode`
-
-   </details>
-
-   <details>
-   <summary>Ubuntu / Debian</summary>
+   Use `.env`:
 
    ```bash
-   wget -qO- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
-   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | sudo tee /etc/apt/sources.list.d/vscode.list
-   sudo apt update && sudo apt install code
+   cp .env.example .env
    ```
 
-   Or via Snap: `sudo snap install --classic code`
+   Then edit `.env`:
 
-   </details>
-5. Configure AWS credentials locally.
-go to AWS console -> IAM > Create User > Attach policies directly > Add `AmazonEC2FullAccess, AmazonSSMReadOnlyAccess` > Create user >
-go to Security credentials tab > Create access key > Show access key > Copy Access Key ID and Secret Access Key.
-
-Use `.env`:
-
-```bash
-cp .env.example .env
-```
-
-Then edit `.env`:
-
-```bash
-AWS_ACCESS_KEY_ID=your-access-key-id
-AWS_SECRET_ACCESS_KEY=your-secret-access-key
-AWS_DEFAULT_REGION=sa-east-1
-```
+   ```bash
+   AWS_ACCESS_KEY_ID=your-access-key-id
+   AWS_SECRET_ACCESS_KEY=your-secret-access-key
+   AWS_DEFAULT_REGION=sa-east-1
+   ```
 
 ## Run
 
@@ -125,7 +91,7 @@ cd server
 npm install
 ```
 
-The Terraform config works out of the box. If you want to override anything, copy the example file (Optional)
+The Terraform config works out of the box. (Optional) Terraform works by default. If you need any further configuration, follow this step.
 
 ```bash
 cd ../infra
@@ -140,6 +106,7 @@ npm run vpn:up
 ```
 
 
+Make sure to destory all resources after use to avoid any unexpected costs
 ```bash
 npm run vpn:down
 ```

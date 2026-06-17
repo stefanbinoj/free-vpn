@@ -35,7 +35,7 @@ runcmd:
   - mv /tmp/wg0.conf /etc/wireguard/wg0.conf
   - |
     PRIVATE_KEY="$(cat /etc/wireguard/server_private.key)"
-    sed -i "s|SERVER_PRIVATE_KEY_PLACEHOLDER|${PRIVATE_KEY}|g" /etc/wireguard/wg0.conf
+    sed -i "s|SERVER_PRIVATE_KEY_PLACEHOLDER|$PRIVATE_KEY|g" /etc/wireguard/wg0.conf
   - chmod 600 /etc/wireguard/wg0.conf
   - wg-quick up wg0
   - systemctl enable wg-quick@wg0
