@@ -118,5 +118,8 @@ Use these browser extensions for a cleaner viewing experience:
 - Unhook
 - uBlock Origin
 
+**NOTE:**
+- It might take a few minutes for provisioning the VPN.
+- Pls dont forget to run `npm run vpn:down` after you are done using the VPN to avoid any unexpected costs.
 
-**Use this at your own risk.** I am not responsible for any shit that you create (ZEE5 ofc.)
+**Use this at your own risk. I am not responsible for any shit that you create (ZEE5 ofc.)

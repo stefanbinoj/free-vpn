@@ -1,4 +1,4 @@
-import { configureClient } from "../lib/wireguard.js";
+import { configureClient, waitForWireGuardReady } from "../lib/wireguard.js";
 import { terraform } from "../lib/terraform.js";
 import { hasCommand } from "../lib/shell.js";
 import { clientConfigPath } from "../lib/paths.js";
@@ -43,11 +43,21 @@ export async function up() {
 
   console.log("Starting Brazil VPN infrastructure...");
   terraform(["init"]);
-  terraform(["apply"]);
 
-  console.log("Generating local WireGuard client config...");
-  configureClient();
-  console.log(`Client config written to ${clientConfigPath}`);
+  try {
+    terraform(["apply", "-auto-approve"]);
+    await waitForWireGuardReady();
+
+    console.log("Generating local WireGuard client config...");
+    configureClient();
+    console.log(`Client config written to ${clientConfigPath}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(message);
+    console.error("Setup failed after Terraform started. Destroying any created AWS resources...");
+    terraform(["destroy", "-auto-approve"]);
+    throw error;
+  }
 
   const stopHealthChecks = startHealthChecks();
   registerDestroyOnExit(stopHealthChecks);
