@@ -1,0 +1,4 @@
+cloud_provider = "aws"
+region         = "sa-east-1"
+instance_type  = "t3.micro"
+use_spot       = false

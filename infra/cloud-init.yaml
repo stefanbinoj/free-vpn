@@ -1,0 +1,43 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+  - wireguard
+  - unattended-upgrades
+
+write_files:
+  - path: /etc/sysctl.d/99-wireguard-forwarding.conf
+    permissions: "0644"
+    content: |
+      net.ipv4.ip_forward=1
+  - path: /etc/ssh/sshd_config.d/99-fifa-vpn.conf
+    permissions: "0644"
+    content: |
+      PasswordAuthentication no
+      PermitRootLogin no
+  - path: /tmp/wg0.conf
+    permissions: "0600"
+    content: |
+      [Interface]
+      Address = ${server_vpn_ip}
+      ListenPort = ${vpn_port}
+      PrivateKey = SERVER_PRIVATE_KEY_PLACEHOLDER
+      SaveConfig = false
+      PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o $(ip route show default | awk '{print $5; exit}') -j MASQUERADE
+      PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o $(ip route show default | awk '{print $5; exit}') -j MASQUERADE
+
+runcmd:
+  - sysctl --system
+  - install -d -m 700 /etc/wireguard
+  - wg genkey | tee /etc/wireguard/server_private.key | wg pubkey > /etc/wireguard/server_public.key
+  - chmod 600 /etc/wireguard/server_private.key
+  - chmod 644 /etc/wireguard/server_public.key
+  - mv /tmp/wg0.conf /etc/wireguard/wg0.conf
+  - |
+    PRIVATE_KEY="$(cat /etc/wireguard/server_private.key)"
+    sed -i "s|SERVER_PRIVATE_KEY_PLACEHOLDER|${PRIVATE_KEY}|g" /etc/wireguard/wg0.conf
+  - chmod 600 /etc/wireguard/wg0.conf
+  - wg-quick up wg0
+  - systemctl enable wg-quick@wg0
+  - systemctl enable --now unattended-upgrades
+  - systemctl reload ssh
