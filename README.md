@@ -105,15 +105,20 @@ cd ..
 npm run vpn:up
 ```
 
-This creates the AWS server, generates `configs/wg-client.conf`, and connects this Mac using `wg-quick`. macOS may ask for your password because VPN routes require `sudo`.
+This creates the AWS server, generates `configs/wg-client.conf`, and connects the current device.
 
-Reconnect only the local Mac client:
+- macOS / Linux: uses `sudo wg-quick up configs/wg-client.conf`
+- Windows: uses `wireguard.exe /installtunnelservice`
+
+macOS and Linux may ask for your password because VPN routes require `sudo`. Windows may need an Administrator terminal.
+
+Reconnect only the local client:
 
 ```bash
 npm run vpn:connect
 ```
 
-Disconnect only the local Mac client:
+Disconnect only the local client:
 
 ```bash
 npm run vpn:disconnect
