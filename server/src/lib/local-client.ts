@@ -5,7 +5,7 @@ import { findCommand, hasCommand, run } from "./shell.js";
 
 const tunnelName = basename(clientConfigPath, ".conf");
 
-function isWindowsAdmin() {
+export function isWindowsAdmin() {
   if (platform() !== "win32") {
     return true;
   }
@@ -18,17 +18,13 @@ function isWindowsAdmin() {
   }
 }
 
-export function connectLocalClient() {
+export function assertLocalClientCanConnect() {
   const os = platform();
 
   if (os === "darwin" || os === "linux") {
     if (!hasCommand("wg-quick")) {
       throw new Error("wg-quick is required to connect this device. Install WireGuard tools.");
     }
-
-    disconnectLocalClient({ bestEffort: true });
-    console.log("Connecting this device to the VPN with wg-quick. sudo may ask for your password...");
-    run("sudo", ["wg-quick", "up", clientConfigPath]);
     return;
   }
 
@@ -42,10 +38,30 @@ export function connectLocalClient() {
     if (!isWindowsAdmin()) {
       throw new Error("Windows WireGuard tunnel setup requires an Administrator terminal. Reopen Command Prompt or PowerShell as Administrator and rerun vpn:up.");
     }
+    return;
+  }
+
+  throw new Error(`Automatic local VPN connect is not implemented for this OS: ${os}`);
+}
+
+export function connectLocalClient() {
+  const os = platform();
+
+  if (os === "darwin" || os === "linux") {
+    assertLocalClientCanConnect();
+    disconnectLocalClient({ bestEffort: true });
+    console.log("Connecting this device to the VPN with wg-quick. sudo may ask for your password...");
+    run("sudo", ["wg-quick", "up", clientConfigPath]);
+    return;
+  }
+
+  if (os === "win32") {
+    assertLocalClientCanConnect();
+    const wireGuardCommand = findCommand(["wireguard.exe", "wireguard"]);
 
     disconnectLocalClient({ bestEffort: true });
     console.log("Connecting this Windows device to the VPN with WireGuard. Run the terminal as Administrator if this fails...");
-    run(wireGuardCommand, ["/installtunnelservice", clientConfigPath]);
+    run(wireGuardCommand!, ["/installtunnelservice", clientConfigPath]);
     return;
   }
 
