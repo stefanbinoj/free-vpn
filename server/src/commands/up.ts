@@ -69,7 +69,7 @@ export async function up() {
     throw error;
   }
 
-  const stopHealthChecks = startHealthChecks();
+  const stopHealthChecks = startHealthChecks({ useTunnelHost: true });
   registerDestroyOnExit(stopHealthChecks);
   await waitForever();
 }

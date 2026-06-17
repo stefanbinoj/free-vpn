@@ -27,6 +27,10 @@ export function generateKeyPair() {
 
 export function ssh(args: string[], remoteCommand: string): string {
   const { serverIp, sshUser, sshPrivateKeyPath } = getOutputs();
+  return sshToHost(serverIp, sshUser, sshPrivateKeyPath, args, remoteCommand);
+}
+
+export function sshToHost(host: string, user: string, privateKeyPath: string, args: string[], remoteCommand: string): string {
   const defaultArgs = [
     "-o",
     "StrictHostKeyChecking=accept-new",
@@ -46,10 +50,10 @@ export function ssh(args: string[], remoteCommand: string): string {
     "ssh",
     [
       "-i",
-      sshPrivateKeyPath,
+      privateKeyPath,
       ...defaultArgs,
       ...args,
-      `${sshUser}@${serverIp}`,
+      `${user}@${host}`,
       remoteCommand,
     ],
     { quiet: true },
