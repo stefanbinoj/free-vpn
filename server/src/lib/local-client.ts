@@ -2,6 +2,7 @@ import { platform } from "node:os";
 import { basename } from "node:path";
 import { clientConfigPath } from "./paths.js";
 import { findCommand, hasCommand, run } from "./shell.js";
+import { getOutputs } from "./terraform.js";
 
 const tunnelName = basename(clientConfigPath, ".conf");
 
@@ -60,6 +61,7 @@ export function connectLocalClient() {
     const wireGuardCommand = findCommand(["wireguard.exe", "wireguard"]);
 
     disconnectLocalClient({ bestEffort: true });
+    addWindowsEndpointRoute();
     console.log("Connecting this Windows device to the VPN with WireGuard. Run the terminal as Administrator if this fails...");
     run(wireGuardCommand!, ["/installtunnelservice", clientConfigPath]);
     return;
@@ -96,6 +98,42 @@ function windowsServiceExists(serviceName: string) {
   }
 }
 
+function windowsDefaultGateway() {
+  const gateway = run(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-Command",
+      "(Get-NetRoute -DestinationPrefix '0.0.0.0/0' | Where-Object { $_.NextHop -ne '0.0.0.0' } | Sort-Object RouteMetric,InterfaceMetric | Select-Object -First 1 -ExpandProperty NextHop)",
+    ],
+    { quiet: true },
+  ).trim();
+
+  if (!gateway) {
+    throw new Error("Could not detect Windows default gateway before enabling WireGuard.");
+  }
+
+  return gateway;
+}
+
+function addWindowsEndpointRoute() {
+  const { serverIp } = getOutputs();
+  const gateway = windowsDefaultGateway();
+
+  console.log(`Adding Windows route for VPN endpoint ${serverIp} via ${gateway}...`);
+  tryDisconnect("route.exe", ["delete", serverIp], { bestEffort: true });
+  run("route.exe", ["add", serverIp, "mask", "255.255.255.255", gateway, "metric", "1"]);
+}
+
+function removeWindowsEndpointRoute() {
+  try {
+    const { serverIp } = getOutputs();
+    tryDisconnect("route.exe", ["delete", serverIp], { bestEffort: true });
+  } catch {
+    // Terraform output may be unavailable after destroy; nothing to remove.
+  }
+}
+
 export function disconnectLocalClient(options: DisconnectOptions = {}) {
   const os = platform();
 
@@ -108,11 +146,13 @@ export function disconnectLocalClient(options: DisconnectOptions = {}) {
     const wireGuardCommand = findCommand(["wireguard.exe", "wireguard"]);
 
     if (!wireGuardCommand) {
+      removeWindowsEndpointRoute();
       return true;
     }
 
     const serviceName = `WireGuardTunnel$${tunnelName}`;
     if (!windowsServiceExists(serviceName)) {
+      removeWindowsEndpointRoute();
       return true;
     }
 
@@ -120,11 +160,13 @@ export function disconnectLocalClient(options: DisconnectOptions = {}) {
     const wireGuardStopped = tryDisconnect(wireGuardCommand, ["/uninstalltunnelservice", tunnelName], options);
 
     if (wireGuardStopped) {
+      removeWindowsEndpointRoute();
       return true;
     }
 
     const serviceStopped = tryDisconnect("sc.exe", ["stop", serviceName], { bestEffort: true });
     const serviceDeleted = tryDisconnect("sc.exe", ["delete", serviceName], { bestEffort: true });
+    removeWindowsEndpointRoute();
     return serviceStopped || serviceDeleted;
   }
 
