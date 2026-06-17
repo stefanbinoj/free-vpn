@@ -1,9 +1,11 @@
 import { getOutputs } from "../lib/terraform.js";
+import { disconnectLocalClient } from "../lib/local-client.js";
 import { ssh } from "../lib/wireguard.js";
 
 const wireguardPort = 51820;
 
 export async function status() {
+  disconnectLocalClient({ bestEffort: true });
   const outputs = getOutputs();
   console.log(`Server: ${outputs.serverIp}`);
   console.log(`SSH: ${outputs.sshUser}@${outputs.serverIp}`);
