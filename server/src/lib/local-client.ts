@@ -87,6 +87,15 @@ function tryDisconnect(command: string, args: string[], options: DisconnectOptio
   }
 }
 
+function windowsServiceExists(serviceName: string) {
+  try {
+    run("sc.exe", ["query", serviceName], { quiet: true });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function disconnectLocalClient(options: DisconnectOptions = {}) {
   const os = platform();
 
@@ -102,6 +111,11 @@ export function disconnectLocalClient(options: DisconnectOptions = {}) {
       return true;
     }
 
+    const serviceName = `WireGuardTunnel$${tunnelName}`;
+    if (!windowsServiceExists(serviceName)) {
+      return true;
+    }
+
     console.log("Disconnecting this Windows device from the VPN...");
     const wireGuardStopped = tryDisconnect(wireGuardCommand, ["/uninstalltunnelservice", tunnelName], options);
 
@@ -109,7 +123,6 @@ export function disconnectLocalClient(options: DisconnectOptions = {}) {
       return true;
     }
 
-    const serviceName = `WireGuardTunnel$${tunnelName}`;
     const serviceStopped = tryDisconnect("sc.exe", ["stop", serviceName], { bestEffort: true });
     const serviceDeleted = tryDisconnect("sc.exe", ["delete", serviceName], { bestEffort: true });
     return serviceStopped || serviceDeleted;
