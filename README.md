@@ -6,55 +6,98 @@ Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil. Almo
 
 1. Install Node.js.
 2. Install Terraform.
-   **macOS**
+
+   <details>
+   <summary>macOS</summary>
+
    ```bash
    brew tap hashicorp/tap
    brew install hashicorp/tap/terraform
    ```
 
-   **Windows**
+   </details>
+
+   <details>
+   <summary>Windows</summary>
+
    ```powershell
    winget install Hashicorp.Terraform
    ```
+
    Alternatively, download the Windows binary from https://developer.hashicorp.com/terraform/install, extract `terraform.exe` to a folder of your choice (e.g. `C:\terraform`), and add that folder to your `PATH`.
 
-   **Ubuntu / Debian**
+   </details>
+
+   <details>
+   <summary>Ubuntu / Debian</summary>
+
    ```bash
    wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
    sudo apt update && sudo apt install terraform
    ```
+
+   </details>
 3. Install WireGuard tools.
-   **macOS**
+
+   <details>
+   <summary>macOS</summary>
+
    ```bash
    brew install wireguard-tools
    ```
 
-   **Windows**
+   </details>
+
+   <details>
+   <summary>Windows</summary>
+
    Download and run the official installer from https://download.wireguard.com/windows-client/wireguard-installer.exe. `wg.exe` is installed under `C:\Program Files\WireGuard\` — add this folder to your `PATH` to use it from any terminal, or call it by full path.
 
-   **Ubuntu / Debian**
+   </details>
+
+   <details>
+   <summary>Ubuntu / Debian</summary>
+
    ```bash
    sudo apt install wireguard
    ```
+
+   </details>
 4. Install the VS Code CLI (`code` command).
-   **macOS**
+
+   <details>
+   <summary>macOS</summary>
+
    ```bash
    brew install --cask visual-studio-code
    ```
+
    Then open VS Code, press **Cmd+Shift+P**, and run **Shell Command: Install 'code' command in PATH**. Restart your terminal afterwards.
 
-   **Windows**
+   </details>
+
+   <details>
+   <summary>Windows</summary>
+
    Download the User Installer from https://code.visualstudio.com/ — it adds `code` to your `PATH` automatically. Restart your terminal afterwards.
+
    Or: `winget install Microsoft.VisualStudioCode`
 
-   **Ubuntu / Debian**
+   </details>
+
+   <details>
+   <summary>Ubuntu / Debian</summary>
+
    ```bash
    wget -qO- https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | sudo tee /etc/apt/sources.list.d/vscode.list
    sudo apt update && sudo apt install code
    ```
+
    Or via Snap: `sudo snap install --classic code`
+
+   </details>
 5. Configure AWS credentials locally.
 go to AWS console -> IAM > Create User > Attach policies directly > Add `AmazonEC2FullAccess, AmazonSSMReadOnlyAccess` > Create user >
 go to Security credentials tab > Create access key > Show access key > Copy Access Key ID and Secret Access Key.
