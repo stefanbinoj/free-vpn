@@ -2,6 +2,13 @@
 
 Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil. Almost zero cost.
 
+<img
+  src="https://github.com/user-attachments/assets/247b39d8-f248-4cc1-a4a8-f687c15f9de8"
+  alt="Lionel Messi Deal With It GIF"
+  width="70%"
+  style="max-width:100%; height:auto;"
+/>
+
 ## Setup
 
 1. Install Node.js.
@@ -79,7 +86,7 @@ cd server
 npm install
 ```
 
-**[Optional]**The Terraform config works out of the box. If you need any further custom configs, follow this step.
+**(Optional):** The Terraform config works out of the box. If you need any further custom configs, follow this step.
 
 ```bash
 cd ../infra
@@ -93,16 +100,16 @@ cd ..
 npm run vpn:up
 ```
 
-<summary>
-This creates the VPN server in brazil region of AWS, generates `configs/wg-client.conf`, and connects the current device.
-</summary>
-
 <details>
-- macOS / Linux: uses `sudo wg-quick up configs/wg-client.conf`
-- Windows: uses `wireguard.exe /installtunnelservice`
+<summary>This creates the VPN server in brazil region of AWS, generates `configs/wg-client.conf`, and connects the current device.</summary>
 
-macOS and Linux may ask for your password because VPN routes require `sudo`. Windows may need an Administrator terminal.
+macOS / Linux: uses `sudo wg-quick up configs/wg-client.conf`
+Windows: uses `wireguard.exe /installtunnelservice`
 </details>
+
+
+> macOS and Linux may ask for your password because VPN routes require `sudo`. Windows may need an Administrator terminal.
+
 
 Make sure to destory all resources after use to avoid any **unexpected costs**
 
