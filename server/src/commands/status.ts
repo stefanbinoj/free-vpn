@@ -1,7 +1,5 @@
 import { getOutputs } from "../lib/terraform.js";
-import { ssh } from "../lib/wireguard.js";
-
-const wireguardPort = 51820;
+import { ssh, wireguardPort } from "../lib/wireguard.js";
 
 export async function status() {
   const outputs = getOutputs();

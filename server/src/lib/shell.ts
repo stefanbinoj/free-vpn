@@ -11,7 +11,7 @@ export function run(command: string, args: string[], options: RunOptions = {}): 
     cwd: options.cwd,
     input: options.input,
     encoding: "utf8",
-    stdio: options.quiet ? ["pipe", "pipe", "pipe"] : "inherit",
+    stdio: options.quiet ? "pipe" : "inherit",
   });
 
   if (result.status !== 0) {
@@ -19,7 +19,7 @@ export function run(command: string, args: string[], options: RunOptions = {}): 
     throw new Error(`Command failed: ${command} ${args.join(" ")}${stderr}`);
   }
 
-  return typeof result.stdout === "string" ? result.stdout.trim() : "";
+  return result.stdout?.trim() ?? "";
 }
 
 export function hasCommand(command: string): boolean {
@@ -29,4 +29,8 @@ export function hasCommand(command: string): boolean {
   });
 
   return result.status === 0;
+}
+
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

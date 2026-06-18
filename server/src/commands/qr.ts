@@ -1,6 +1,7 @@
+import { readFileSync } from "node:fs";
 import qrcode from "qrcode-terminal";
-import { readClientConfig } from "../lib/wireguard.js";
+import { clientConfigPath } from "../lib/paths.js";
 
 export async function qr() {
-  qrcode.generate(readClientConfig(), { small: true });
+  qrcode.generate(readFileSync(clientConfigPath, "utf8"), { small: true });
 }

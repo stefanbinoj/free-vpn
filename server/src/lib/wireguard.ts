@@ -1,18 +1,11 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { clientConfigPath, logsDir } from "./paths.js";
-import { hasCommand, run } from "./shell.js";
+import { errorMessage, hasCommand, run } from "./shell.js";
 import { getOutputs } from "./terraform.js";
 
-const wireguardPort = 51820;
+export const wireguardPort = 51820;
 const clientVpnIp = "10.8.0.2/32";
-
-export function generateKeyPair() {
-  const privateKey = run("wg", ["genkey"], { quiet: true });
-  const publicKey = run("wg", ["pubkey"], { input: `${privateKey}\n`, quiet: true });
-
-  return { privateKey, publicKey };
-}
 
 export function ssh(args: string[], remoteCommand: string): string {
   const { serverIp, sshUser, sshPrivateKeyPath } = getOutputs();
@@ -31,19 +24,11 @@ export function ssh(args: string[], remoteCommand: string): string {
   );
 }
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function timestamp() {
-  return new Date().toISOString().replace(/[:.]/g, "-");
-}
-
 export function collectServerDiagnostics(reason: string): string | undefined {
   try {
     const outputs = getOutputs();
     mkdirSync(logsDir, { recursive: true });
-    const logPath = `${logsDir}/vpn-debug-${timestamp()}.log`;
+    const logPath = `${logsDir}/vpn-debug-${new Date().toISOString().replace(/[:.]/g, "-")}.log`;
     const diagnostics = ssh(
       [
         "-o",
@@ -81,8 +66,7 @@ export function collectServerDiagnostics(reason: string): string | undefined {
     console.error(`Saved server diagnostics to ${logPath}`);
     return logPath;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`Could not collect server diagnostics: ${message}`);
+    console.error(`Could not collect server diagnostics: ${errorMessage(error)}`);
     return undefined;
   }
 }
@@ -132,12 +116,12 @@ export async function waitForWireGuardReady(timeoutMs = 300_000) {
         return;
       }
     } catch (error) {
-      lastError = error instanceof Error ? error.message : String(error);
+      lastError = errorMessage(error);
       if (lastError !== lastProgress) {
         console.log("Waiting for SSH to become reachable...");
         lastProgress = lastError;
       }
-      await sleep(retryDelayMs);
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
     }
   }
 
@@ -150,26 +134,25 @@ export function configureClient(): string {
   }
 
   const outputs = getOutputs();
-  const client = generateKeyPair();
+  const privateKey = run("wg", ["genkey"], { quiet: true });
+  const publicKey = run("wg", ["pubkey"], { input: `${privateKey}\n`, quiet: true });
   const serverPublicKey = ssh([], "sudo cat /etc/wireguard/server_public.key");
-  const clientIpWithoutMask = clientVpnIp.split("/")[0];
-  const clientAllowedIp = `${clientIpWithoutMask}/32`;
 
   ssh(
     [],
     [
       "sudo wg set wg0 peer",
-      client.publicKey,
+      publicKey,
       "allowed-ips",
-      clientAllowedIp,
+      clientVpnIp,
       "&&",
       "sudo sh -c",
-      `'grep -q "PublicKey = ${client.publicKey}" /etc/wireguard/wg0.conf || printf "\\n[Peer]\\nPublicKey = ${client.publicKey}\\nAllowedIPs = ${clientAllowedIp}\\n" >> /etc/wireguard/wg0.conf'`,
+      `'grep -q "PublicKey = ${publicKey}" /etc/wireguard/wg0.conf || printf "\\n[Peer]\\nPublicKey = ${publicKey}\\nAllowedIPs = ${clientVpnIp}\\n" >> /etc/wireguard/wg0.conf'`,
     ].join(" "),
   );
 
   const config = `[Interface]
-PrivateKey = ${client.privateKey}
+PrivateKey = ${privateKey}
 Address = ${clientVpnIp}
 DNS = 1.1.1.1
 
@@ -184,8 +167,4 @@ PersistentKeepalive = 25
   writeFileSync(clientConfigPath, config, { mode: 0o600 });
 
   return config;
-}
-
-export function readClientConfig(): string {
-  return readFileSync(clientConfigPath, "utf8");
 }

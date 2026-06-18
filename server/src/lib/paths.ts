@@ -1,9 +1,7 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const here = dirname(fileURLToPath(import.meta.url));
-
-export const repoRoot = resolve(here, "../../..");
+export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 export const infraDir = resolve(repoRoot, "infra");
 export const configsDir = resolve(repoRoot, "configs");
 export const logsDir = resolve(repoRoot, "logs");

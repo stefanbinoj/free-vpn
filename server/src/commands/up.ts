@@ -1,6 +1,6 @@
 import { collectServerDiagnostics, configureClient, waitForWireGuardReady } from "../lib/wireguard.js";
 import { terraform } from "../lib/terraform.js";
-import { hasCommand } from "../lib/shell.js";
+import { errorMessage, hasCommand } from "../lib/shell.js";
 import { clientConfigPath } from "../lib/paths.js";
 import { ensureSshKeyPair } from "../lib/ssh-key.js";
 import { startHealthChecks, waitForever } from "../lib/health.js";
@@ -23,8 +23,7 @@ function registerDestroyOnExit(stopHealthChecks: () => void) {
       terraform(["destroy", "-auto-approve"]);
       process.exit(0);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error(message);
+      console.error(errorMessage(error));
       process.exit(1);
     }
   };
@@ -55,7 +54,7 @@ export async function up() {
     console.log(`Client config written to ${clientConfigPath}`);
     connectLocalClient();
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = errorMessage(error);
     console.error(message);
     collectServerDiagnostics(message);
     console.error("Setup failed after Terraform started. Destroying any created AWS resources...");

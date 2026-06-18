@@ -1,11 +1,8 @@
 import { getOutputs } from "./terraform.js";
+import { errorMessage } from "./shell.js";
 import { ssh } from "./wireguard.js";
 
 const intervalMs = Number(process.env.VPN_HEALTH_INTERVAL_MS ?? 7000);
-
-function now() {
-  return new Date().toISOString();
-}
 
 export function startHealthChecks() {
   const outputs = getOutputs();
@@ -24,13 +21,12 @@ export function startHealthChecks() {
         ? `${Math.max(0, Math.floor(Date.now() / 1000) - Number(latestHandshake))}s ago`
         : "no handshake yet";
 
-      console.log(`[${now()}] wg=${active} latest_handshake=${handshakeAge}`);
+      console.log(`[${new Date().toISOString()}] wg=${active} latest_handshake=${handshakeAge}`);
       if (transfer) {
         console.log(transfer);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error(`[${now()}] health check failed: ${message}`);
+      console.error(`[${new Date().toISOString()}] health check failed: ${errorMessage(error)}`);
     }
   };
 

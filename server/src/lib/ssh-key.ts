@@ -10,9 +10,10 @@ export const sshPublicKeyPath = `${sshPrivateKeyPath}.pub`;
 export async function ensureSshKeyPair() {
   const hasPrivateKey = existsSync(sshPrivateKeyPath);
   const hasPublicKey = existsSync(sshPublicKeyPath);
+  const sshDir = dirname(sshPrivateKeyPath);
 
-  mkdirSync(dirname(sshPrivateKeyPath), { recursive: true, mode: 0o700 });
-  await chmod(dirname(sshPrivateKeyPath), 0o700);
+  mkdirSync(sshDir, { recursive: true, mode: 0o700 });
+  await chmod(sshDir, 0o700);
 
   if (hasPrivateKey && hasPublicKey) {
     await normalizeSshKeyPermissions();

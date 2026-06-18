@@ -3,8 +3,6 @@ import { basename } from "node:path";
 import { clientConfigPath } from "./paths.js";
 import { hasCommand, run } from "./shell.js";
 
-const tunnelName = basename(clientConfigPath, ".conf");
-
 export function connectLocalClient() {
   const os = platform();
 
@@ -42,6 +40,6 @@ export function disconnectLocalClient() {
 
   if (os === "win32" && hasCommand("wireguard.exe")) {
     console.log("Disconnecting this Windows device from the VPN...");
-    run("wireguard.exe", ["/uninstalltunnelservice", tunnelName]);
+    run("wireguard.exe", ["/uninstalltunnelservice", basename(clientConfigPath, ".conf")]);
   }
 }
