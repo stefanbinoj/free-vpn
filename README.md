@@ -98,6 +98,9 @@ Start the VPN:
 ```bash
 cd ..
 npm run vpn:up
+
+# In another terminal window run this comannd to verify if you are connected:
+curl ipinfo.io
 ```
 
 <details>
