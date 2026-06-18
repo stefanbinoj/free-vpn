@@ -1,7 +1,16 @@
 import { platform } from "node:os";
 import { basename } from "node:path";
 import { clientConfigPath } from "./paths.js";
-import { hasCommand, run } from "./shell.js";
+import { errorMessage, hasCommand, run } from "./shell.js";
+
+// wg-quick (Unix) and wireguard.exe (Windows) signal "nothing to tear down"
+// with one of these messages. Treat them as success so disconnectLocalClient
+// is idempotent and safe to call from cleanup paths.
+const ALREADY_DOWN_PATTERN = /is not a WireGuard interface|does not exist/i;
+
+function ignoreAlreadyDown(error: unknown): boolean {
+  return ALREADY_DOWN_PATTERN.test(errorMessage(error));
+}
 
 export function connectLocalClient() {
   const os = platform();
@@ -29,17 +38,29 @@ export function connectLocalClient() {
   throw new Error(`Automatic local VPN connect is not implemented for this OS: ${os}`);
 }
 
+function runTeardown(command: string, args: string[]) {
+  try {
+    run(command, args);
+  } catch (error) {
+    if (ignoreAlreadyDown(error)) {
+      console.log("Local WireGuard tunnel is already down; skipping teardown.");
+      return;
+    }
+    throw error;
+  }
+}
+
 export function disconnectLocalClient() {
   const os = platform();
 
   if ((os === "darwin" || os === "linux") && hasCommand("wg-quick")) {
     console.log("Disconnecting this device from the VPN...");
-    run("sudo", ["wg-quick", "down", clientConfigPath]);
+    runTeardown("sudo", ["wg-quick", "down", clientConfigPath]);
     return;
   }
 
   if (os === "win32" && hasCommand("wireguard.exe")) {
     console.log("Disconnecting this Windows device from the VPN...");
-    run("wireguard.exe", ["/uninstalltunnelservice", basename(clientConfigPath, ".conf")]);
+    runTeardown("wireguard.exe", ["/uninstalltunnelservice", basename(clientConfigPath, ".conf")]);
   }
 }

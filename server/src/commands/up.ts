@@ -1,36 +1,10 @@
-import { collectServerDiagnostics, configureClient, waitForWireGuardReady } from "../lib/wireguard.js";
+import { configureClient, waitForWireGuardReady } from "../lib/wireguard.js";
 import { terraform } from "../lib/terraform.js";
 import { errorMessage, hasCommand } from "../lib/shell.js";
 import { clientConfigPath } from "../lib/paths.js";
 import { ensureSshKeyPair } from "../lib/ssh-key.js";
-import { startHealthChecks, waitForever } from "../lib/health.js";
+import { startHealthChecks } from "../lib/health.js";
 import { connectLocalClient, disconnectLocalClient } from "../lib/local-client.js";
-
-function registerDestroyOnExit(stopHealthChecks: () => void) {
-  let isDestroying = false;
-
-  const destroy = (signal: NodeJS.Signals) => {
-    if (isDestroying) {
-      return;
-    }
-
-    isDestroying = true;
-    stopHealthChecks();
-    console.log(`\nReceived ${signal}. Destroying Brazil VPN infrastructure...`);
-
-    try {
-      disconnectLocalClient();
-      terraform(["destroy", "-auto-approve"]);
-      process.exit(0);
-    } catch (error) {
-      console.error(errorMessage(error));
-      process.exit(1);
-    }
-  };
-
-  process.once("SIGINT", destroy);
-  process.once("SIGTERM", destroy);
-}
 
 export async function up() {
   if (!hasCommand("terraform")) {
@@ -56,14 +30,27 @@ export async function up() {
   } catch (error) {
     const message = errorMessage(error);
     console.error(message);
-    collectServerDiagnostics(message);
     console.error("Setup failed after Terraform started. Destroying any created AWS resources...");
-    disconnectLocalClient();
+    try {
+      disconnectLocalClient();
+    } catch (disconnectError) {
+      console.warn(`Skipping local tunnel teardown: ${errorMessage(disconnectError)}`);
+    }
     terraform(["destroy", "-auto-approve"]);
     throw error;
   }
 
-  const stopHealthChecks = startHealthChecks();
-  registerDestroyOnExit(stopHealthChecks);
-  await waitForever();
+  startHealthChecks();
+  registerCleanupReminder();
+}
+
+function registerCleanupReminder() {
+  const remind = (signal: NodeJS.Signals) => {
+    console.log(`\nReceived ${signal}. Health checks stopped.`);
+    console.log(`Run \`npm run vpn:down\` to terminate the EC2 instance and disconnect the local tunnel.`);
+    process.exit(0);
+  };
+
+  process.once("SIGINT", remind);
+  process.once("SIGTERM", remind);
 }

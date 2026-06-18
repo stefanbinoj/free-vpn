@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { clientConfigPath, logsDir } from "./paths.js";
+import { clientConfigPath } from "./paths.js";
 import { errorMessage, hasCommand, run } from "./shell.js";
 import { getOutputs } from "./terraform.js";
 
@@ -22,53 +22,6 @@ export function ssh(args: string[], remoteCommand: string): string {
     ],
     { quiet: true },
   );
-}
-
-export function collectServerDiagnostics(reason: string): string | undefined {
-  try {
-    const outputs = getOutputs();
-    mkdirSync(logsDir, { recursive: true });
-    const logPath = `${logsDir}/vpn-debug-${new Date().toISOString().replace(/[:.]/g, "-")}.log`;
-    const diagnostics = ssh(
-      [
-        "-o",
-        "ConnectTimeout=8",
-        "-o",
-        "ConnectionAttempts=1",
-        "-o",
-        "BatchMode=yes",
-      ],
-      [
-        "echo '=== reason ==='",
-        `echo '${reason.replace(/'/g, "'\\''")}'`,
-        "echo '=== server ==='",
-        `echo '${outputs.sshUser}@${outputs.serverIp}'`,
-        "echo '=== cloud-init status ==='",
-        "cloud-init status --long || true",
-        "echo '=== cloud-init output tail ==='",
-        "sudo tail -n 200 /var/log/cloud-init-output.log || true",
-        "echo '=== cloud-init log tail ==='",
-        "sudo tail -n 200 /var/log/cloud-init.log || true",
-        "echo '=== wg service ==='",
-        "systemctl status wg-quick@wg0 --no-pager || true",
-        "echo '=== wg show ==='",
-        "sudo wg show || true",
-        "echo '=== wireguard files ==='",
-        "sudo ls -la /etc/wireguard || true",
-        "echo '=== wg0 config without private key ==='",
-        "sudo sed 's/^PrivateKey = .*/PrivateKey = [redacted]/' /etc/wireguard/wg0.conf || true",
-        "echo '=== network ==='",
-        "ip route || true",
-      ].join(" ; "),
-    );
-
-    writeFileSync(logPath, diagnostics);
-    console.error(`Saved server diagnostics to ${logPath}`);
-    return logPath;
-  } catch (error) {
-    console.error(`Could not collect server diagnostics: ${errorMessage(error)}`);
-    return undefined;
-  }
 }
 
 export async function waitForWireGuardReady(timeoutMs = 300_000) {
@@ -121,14 +74,14 @@ export async function waitForWireGuardReady(timeoutMs = 300_000) {
         console.log("Waiting for SSH to become reachable...");
         lastProgress = lastError;
       }
-      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
     }
+    await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
   }
 
   throw new Error(`Timed out waiting for WireGuard server readiness.\n${lastError}`);
 }
 
-export function configureClient(): string {
+export function configureClient(): void {
   if (!hasCommand("wg")) {
     throw new Error("wg is required locally to generate WireGuard keys. Install wireguard-tools.");
   }
@@ -165,6 +118,4 @@ PersistentKeepalive = 25
 
   mkdirSync(dirname(clientConfigPath), { recursive: true });
   writeFileSync(clientConfigPath, config, { mode: 0o600 });
-
-  return config;
 }
