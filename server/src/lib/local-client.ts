@@ -38,33 +38,29 @@ export function connectLocalClient() {
   throw new Error(`Automatic local VPN connect is not implemented for this OS: ${os}`);
 }
 
+function runTeardown(command: string, args: string[]) {
+  try {
+    run(command, args);
+  } catch (error) {
+    if (ignoreAlreadyDown(error)) {
+      console.log("Local WireGuard tunnel is already down; skipping teardown.");
+      return;
+    }
+    throw error;
+  }
+}
+
 export function disconnectLocalClient() {
   const os = platform();
 
   if ((os === "darwin" || os === "linux") && hasCommand("wg-quick")) {
     console.log("Disconnecting this device from the VPN...");
-    try {
-      run("sudo", ["wg-quick", "down", clientConfigPath]);
-    } catch (error) {
-      if (ignoreAlreadyDown(error)) {
-        console.log("Local WireGuard tunnel is already down; skipping teardown.");
-        return;
-      }
-      throw error;
-    }
+    runTeardown("sudo", ["wg-quick", "down", clientConfigPath]);
     return;
   }
 
   if (os === "win32" && hasCommand("wireguard.exe")) {
     console.log("Disconnecting this Windows device from the VPN...");
-    try {
-      run("wireguard.exe", ["/uninstalltunnelservice", basename(clientConfigPath, ".conf")]);
-    } catch (error) {
-      if (ignoreAlreadyDown(error)) {
-        console.log("Local WireGuard tunnel is already down; skipping teardown.");
-        return;
-      }
-      throw error;
-    }
+    runTeardown("wireguard.exe", ["/uninstalltunnelservice", basename(clientConfigPath, ".conf")]);
   }
 }
