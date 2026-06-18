@@ -2,12 +2,11 @@ import { getOutputs } from "./terraform.js";
 import { errorMessage } from "./shell.js";
 import { ssh } from "./wireguard.js";
 
-const intervalMs = Number(process.env.VPN_HEALTH_INTERVAL_MS ?? 7000);
+const intervalMs = 5000
 
 export function startHealthChecks() {
   const outputs = getOutputs();
-  console.log(`Watching Brazil VPN health for ${outputs.serverIp}. Press Ctrl+C to destroy resources.`);
-  console.log(`Health interval: ${intervalMs}ms`);
+  console.log(`Running Health Check for: ${outputs.serverIp}. Press Ctrl+C to destroy resources.`);
 
   const check = () => {
     try {

@@ -19,7 +19,11 @@ function registerDestroyOnExit(stopHealthChecks: () => void) {
     console.log(`\nReceived ${signal}. Destroying Brazil VPN infrastructure...`);
 
     try {
-      disconnectLocalClient();
+      try {
+        disconnectLocalClient();
+      } catch (disconnectError) {
+        console.warn(`Skipping local tunnel teardown: ${errorMessage(disconnectError)}`);
+      }
       terraform(["destroy", "-auto-approve"]);
       process.exit(0);
     } catch (error) {
@@ -58,7 +62,11 @@ export async function up() {
     console.error(message);
     collectServerDiagnostics(message);
     console.error("Setup failed after Terraform started. Destroying any created AWS resources...");
-    disconnectLocalClient();
+    try {
+      disconnectLocalClient();
+    } catch (disconnectError) {
+      console.warn(`Skipping local tunnel teardown: ${errorMessage(disconnectError)}`);
+    }
     terraform(["destroy", "-auto-approve"]);
     throw error;
   }
