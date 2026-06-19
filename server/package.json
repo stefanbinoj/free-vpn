@@ -10,7 +10,10 @@
     "vpn:status": "tsx src/index.ts status"
   },
   "dependencies": {
-    "dotenv": "^17.4.2"
+    "commander": "^15.0.0",
+    "dotenv": "^17.4.2",
+    "listr2": "^10.2.1",
+    "picocolors": "^1.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

@@ -1,30 +1,49 @@
 import { config } from "dotenv";
 import { resolve } from "node:path";
+import { Command } from "commander";
 import { connect } from "./commands/connect.js";
 import { disconnect } from "./commands/disconnect.js";
 import { down } from "./commands/down.js";
 import { status } from "./commands/status.js";
 import { up } from "./commands/up.js";
+import { error as logError } from "./lib/console.js";
 import { repoRoot } from "./lib/paths.js";
 
 config({ path: resolve(repoRoot, ".env") });
 
-const command = process.argv[2];
+const program = new Command();
 
-const commands: Record<string, () => Promise<void>> = {
-  up,
-  down,
-  connect,
-  disconnect,
-  status,
-};
+program
+  .name("vpn")
+  .description("Personal WireGuard VPN manager for the Brazil exit node.")
+  .version("0.1.0");
 
-if (!command || !commands[command]) {
-  console.error("Usage: npm run vpn:<up|down|connect|disconnect|status>");
-  process.exit(1);
-}
+program
+  .command("up")
+  .description("Provision AWS infrastructure and connect this device to the VPN.")
+  .action(up);
 
-commands[command]().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+program
+  .command("down")
+  .description("Disconnect this device and destroy AWS infrastructure.")
+  .action(down);
+
+program
+  .command("connect")
+  .description("Connect this device to the running VPN.")
+  .action(connect);
+
+program
+  .command("disconnect")
+  .description("Disconnect this device from the VPN.")
+  .action(disconnect);
+
+program
+  .command("status")
+  .description("Show VPN server and tunnel status.")
+  .action(status);
+
+program.parseAsync(process.argv).catch((err) => {
+  logError(err instanceof Error ? err.message : String(err));
   process.exit(1);
 });

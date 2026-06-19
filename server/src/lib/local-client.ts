@@ -20,7 +20,6 @@ export function connectLocalClient() {
       throw new Error("wg-quick is required to connect this device. Install WireGuard tools.");
     }
 
-    console.log("Connecting this device to the VPN with wg-quick. sudo may ask for your password...");
     run("sudo", ["wg-quick", "up", clientConfigPath]);
     return;
   }
@@ -30,7 +29,6 @@ export function connectLocalClient() {
       throw new Error("wireguard.exe is required to connect this Windows device. Install the official WireGuard app and add it to PATH.");
     }
 
-    console.log("Connecting this Windows device to the VPN with WireGuard. Run the terminal as Administrator if this fails...");
     run("wireguard.exe", ["/installtunnelservice", clientConfigPath]);
     return;
   }
@@ -43,7 +41,6 @@ function runTeardown(command: string, args: string[]) {
     run(command, args);
   } catch (error) {
     if (ignoreAlreadyDown(error)) {
-      console.log("Local WireGuard tunnel is already down; skipping teardown.");
       return;
     }
     throw error;
@@ -54,13 +51,11 @@ export function disconnectLocalClient() {
   const os = platform();
 
   if ((os === "darwin" || os === "linux") && hasCommand("wg-quick")) {
-    console.log("Disconnecting this device from the VPN...");
     runTeardown("sudo", ["wg-quick", "down", clientConfigPath]);
     return;
   }
 
   if (os === "win32" && hasCommand("wireguard.exe")) {
-    console.log("Disconnecting this Windows device from the VPN...");
     runTeardown("wireguard.exe", ["/uninstalltunnelservice", basename(clientConfigPath, ".conf")]);
   }
 }

@@ -1,3 +1,4 @@
+import { info, warn } from "./console.js";
 import { getOutputs } from "./terraform.js";
 import { errorMessage } from "./shell.js";
 import { ssh } from "./wireguard.js";
@@ -6,7 +7,7 @@ const intervalMs = 15000
 
 export function startHealthChecks() {
   const outputs = getOutputs();
-  console.log(`Running Health Check for: ${outputs.serverIp}. Run \`npm run vpn:down\` to destroy resources.`);
+  info(`Running Health Check for: ${outputs.serverIp}. Run \`npm run vpn:down\` to destroy resources.`);
 
   const check = () => {
     try {
@@ -18,9 +19,9 @@ export function startHealthChecks() {
         ? `${Math.max(0, Math.floor(Date.now() / 1000) - Number(latestHandshake))}s ago`
         : "no handshake yet";
 
-      console.log(`[${new Date().toISOString()}] latest_handshake=${handshakeAge}`);
+      info(`[${new Date().toISOString()}] latest_handshake=${handshakeAge}`);
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] health check failed: ${errorMessage(error)}`);
+      warn(`[${new Date().toISOString()}] health check failed: ${errorMessage(error)}`);
     }
   };
 

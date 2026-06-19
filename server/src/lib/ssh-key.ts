@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { chmod } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
+import { info } from "./console.js";
 import { hasCommand, run } from "./shell.js";
 
 export const sshPrivateKeyPath = join(homedir(), ".ssh", "fifa-vpn");
@@ -37,7 +38,7 @@ export async function ensureSshKeyPair() {
     );
   }
 
-  console.log(`Creating SSH key pair at ${sshPrivateKeyPath}`);
+  info(`Creating SSH key pair at ${sshPrivateKeyPath}`);
   run("ssh-keygen", ["-t", "ed25519", "-f", sshPrivateKeyPath, "-C", "fifa-vpn", "-N", ""]);
   await normalizeSshKeyPermissions();
 }
