@@ -2,13 +2,14 @@ import { Listr } from "listr2";
 import pc from "picocolors";
 import { terraform } from "../lib/terraform.js";
 import { disconnectLocalClient } from "../lib/local-client.js";
+import { withTiming } from "../lib/listr-utils.js";
 
 export async function down() {
   const tasks = new Listr(
     [
       {
         title: "Disconnecting local tunnel",
-        task: async () => {
+        task: withTiming("Disconnecting local tunnel", async () => {
           // Local teardown is best-effort: the tunnel may already be down
           // (user never ran vpn:connect, or ran vpn:disconnect earlier), or
           // sudo credentials may be unavailable. Never let it block the
@@ -18,16 +19,16 @@ export async function down() {
           } catch {
             // Best-effort; skip silently.
           }
-        },
+        }),
       },
       {
         title: "Destroy AWS infrastructure",
-        task: async () => {
-          await terraform(["destroy", "-auto-approve"]);
-        },
+        task: withTiming("Destroy AWS infrastructure", () =>
+          terraform(["destroy", "-auto-approve"]),
+        ),
       },
     ],
-    { concurrent: false, exitOnError: true, renderer: "default" },
+    { concurrent: false, exitOnError: true, renderer: "simple" },
   );
 
   try {

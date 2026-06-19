@@ -3,6 +3,7 @@ import pc from "picocolors";
 import { errorMessage, run } from "../lib/shell.js";
 import { getOutputs } from "../lib/terraform.js";
 import { warn } from "../lib/console.js";
+import { withTiming } from "../lib/listr-utils.js";
 import { ssh } from "../lib/wireguard.js";
 
 type Outputs = { serverIp: string; sshUser: string; sshPrivateKeyPath: string };
@@ -19,9 +20,9 @@ export async function status() {
     [
       {
         title: "Get server info",
-        task: async () => {
+        task: withTiming("Get server info", async () => {
           state.outputs = await getOutputs();
-        },
+        }),
       },
       {
         title: "Fetch public IP",
@@ -40,12 +41,12 @@ export async function status() {
       },
       {
         title: "Get WireGuard status",
-        task: async () => {
+        task: withTiming("Get WireGuard status", async () => {
           state.wgStatus = await ssh([], "sudo wg show wg0");
-        },
+        }),
       },
     ],
-    { concurrent: false, exitOnError: true, renderer: "default" },
+    { concurrent: false, exitOnError: true, renderer: "simple" },
   );
 
   try {

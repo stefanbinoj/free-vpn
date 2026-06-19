@@ -20,7 +20,7 @@ export async function connectLocalClient(): Promise<void> {
       throw new Error("wg-quick is required to connect this device. Install WireGuard tools.");
     }
 
-    await run("sudo", ["wg-quick", "up", clientConfigPath], { quiet: true });
+    await run("sudo", ["wg-quick", "up", clientConfigPath], { quiet: true, timeoutMs: 10_000 });
     return;
   }
 
@@ -29,7 +29,7 @@ export async function connectLocalClient(): Promise<void> {
       throw new Error("wireguard.exe is required to connect this Windows device. Install the official WireGuard app and add it to PATH.");
     }
 
-    await run("wireguard.exe", ["/installtunnelservice", clientConfigPath], { quiet: true });
+    await run("wireguard.exe", ["/installtunnelservice", clientConfigPath], { quiet: true, timeoutMs: 10_000 });
     return;
   }
 
@@ -38,7 +38,7 @@ export async function connectLocalClient(): Promise<void> {
 
 async function runTeardown(command: string, args: string[]): Promise<void> {
   try {
-    await run(command, args, { quiet: true });
+    await run(command, args, { quiet: true, timeoutMs: 10_000 });
   } catch (error) {
     if (ignoreAlreadyDown(error)) {
       return;

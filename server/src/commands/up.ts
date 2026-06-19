@@ -4,6 +4,7 @@ import { getOutputs, terraform } from "../lib/terraform.js";
 import { errorMessage, hasCommand } from "../lib/shell.js";
 import { ensureSshKeyPair } from "../lib/ssh-key.js";
 import { error, info, warn } from "../lib/console.js";
+import { withTiming } from "../lib/listr-utils.js";
 import { startHealthChecks } from "../lib/health.js";
 import { connectLocalClient, disconnectLocalClient } from "../lib/local-client.js";
 import pc from "picocolors";
@@ -22,15 +23,11 @@ export async function up() {
     [
       {
         title: "Initialize Terraform",
-        task: async () => {
-          await terraform(["init"]);
-        },
+        task: withTiming("Initialize Terraform", () => terraform(["init"])),
       },
       {
         title: "Provision EC2 instance",
-        task: async () => {
-          await terraform(["apply", "-auto-approve"]);
-        },
+        task: withTiming("Provision EC2 instance", () => terraform(["apply", "-auto-approve"])),
       },
       {
         title: "Wait for WireGuard server",
@@ -45,18 +42,14 @@ export async function up() {
       },
       {
         title: "Generate client config",
-        task: async () => {
-          await configureClient();
-        },
+        task: withTiming("Generate client config", () => configureClient()),
       },
       {
-        title: "Connecting local tunnel",
-        task: async () => {
-          await connectLocalClient();
-        },
+        title: "Connect local tunnel",
+        task: withTiming("Connect local tunnel", () => connectLocalClient()),
       },
     ],
-    { concurrent: false, exitOnError: true, renderer: "default" },
+    { concurrent: false, exitOnError: true, renderer: "simple" },
   );
 
   try {
@@ -101,9 +94,8 @@ async function showReadySummary() {
 }
 
 function registerCleanupReminder() {
-  const remind = (signal: NodeJS.Signals) => {
-    warn(`\nReceived ${signal}. Health checks stopped.`);
-    info(`Run \`npm run vpn:down\` to terminate the EC2 instance and disconnect the local tunnel.`);
+  const remind = () => {
+    console.log(`${pc.dim("Run")} ${pc.cyan("npm run vpn:down")} ${pc.dim("to terminate the EC2 instance and disconnect the local tunnel.")}`);
     process.exit(0);
   };
 

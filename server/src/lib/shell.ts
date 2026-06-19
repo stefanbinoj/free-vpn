@@ -4,9 +4,12 @@ type RunOptions = {
   cwd?: string;
   input?: string;
   quiet?: boolean;
+  timeoutMs?: number;
 };
 
 export function run(command: string, args: string[], options: RunOptions = {}): Promise<string> {
+  const timeoutMs = options.timeoutMs ?? 0;
+
   return new Promise((resolve, reject) => {
     const quiet = options.quiet ?? false;
     const stdio: SpawnOptions["stdio"] = quiet
@@ -17,6 +20,40 @@ export function run(command: string, args: string[], options: RunOptions = {}): 
 
     let stdout = "";
     let stderr = "";
+    let timer: NodeJS.Timeout | undefined;
+    let settled = false;
+
+    const settleReject = (err: Error) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      reject(err);
+    };
+
+    const settleResolve = (value: string) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      resolve(value);
+    };
+
+    if (timeoutMs > 0) {
+      timer = setTimeout(() => {
+        child.kill("SIGTERM");
+        // Grace period for clean exit, then force-kill.
+        const killTimer = setTimeout(() => {
+          if (!child.killed && child.exitCode === null) {
+            child.kill("SIGKILL");
+          }
+        }, 1000);
+        killTimer.unref();
+        settleReject(
+          new Error(
+            `Command timed out after ${timeoutMs}ms: ${command} ${args.join(" ")}`,
+          ),
+        );
+      }, timeoutMs);
+    }
 
     if (quiet) {
       child.stdout?.on("data", (chunk: Buffer) => {
@@ -33,18 +70,18 @@ export function run(command: string, args: string[], options: RunOptions = {}): 
     }
 
     child.on("error", (err) => {
-      reject(err);
+      settleReject(err instanceof Error ? err : new Error(String(err)));
     });
 
     child.on("close", (code) => {
       if (code !== 0) {
-        reject(
+        settleReject(
           new Error(
             `Command failed: ${command} ${args.join(" ")}${stderr ? `\n${stderr}` : ""}`,
           ),
         );
       } else {
-        resolve(quiet ? stdout.trim() : "");
+        settleResolve(quiet ? stdout.trim() : "");
       }
     });
   });
