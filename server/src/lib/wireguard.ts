@@ -24,13 +24,13 @@ export function ssh(args: string[], remoteCommand: string): string {
   );
 }
 
-export async function waitForWireGuardReady(timeoutMs = 300_000) {
+export async function waitForWireGuardReady(
+  options: { onProgress?: (text: string) => void; timeoutMs?: number } = {},
+) {
+  const { onProgress, timeoutMs = 300_000 } = options;
   const startedAt = Date.now();
   const retryDelayMs = 5_000;
   let lastError = "";
-  let lastProgress = "";
-
-  console.log("Waiting for cloud-init and WireGuard to finish bootstrapping...");
 
   while (Date.now() - startedAt < timeoutMs) {
     try {
@@ -54,26 +54,18 @@ export async function waitForWireGuardReady(timeoutMs = 300_000) {
           "systemctl is-active wg-quick@wg0 2>/dev/null || true",
         ].join(" ; "),
       );
-
-      if (progress !== lastProgress) {
-        console.log(progress);
-        lastProgress = progress;
-      }
+      onProgress?.(progress);
 
       const keyPresent = progress.includes("server_key=present");
       const interfacePresent = progress.includes("wg_interface=present");
       const cloudInitDone = progress.includes("status: done");
 
       if (cloudInitDone && keyPresent && interfacePresent) {
-        console.log("WireGuard server is ready.");
         return;
       }
     } catch (error) {
       lastError = errorMessage(error);
-      if (lastError !== lastProgress) {
-        console.log("Waiting for SSH to become reachable...");
-        lastProgress = lastError;
-      }
+      onProgress?.(`Waiting for SSH to become reachable... (${lastError})`);
     }
     await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
   }
