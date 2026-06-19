@@ -1,6 +1,6 @@
 # Self-Hosted VPN (for watching FIFA highlights via yt)
 
-Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil. Almost zero cost.
+Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil **(Bring Your Own Cloud)** version. Almost zero cost.
 
 <img
   src="https://github.com/user-attachments/assets/247b39d8-f248-4cc1-a4a8-f687c15f9de8"
@@ -59,7 +59,7 @@ Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil. Almo
    <summary>Ubuntu / Debian</summary>
 
    ```bash
-   sudo apt install wireguard
+   sudo apt install wireguard resolvconf
    ```
 
    </details>
