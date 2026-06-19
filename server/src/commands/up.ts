@@ -3,7 +3,7 @@ import { configureClient, waitForWireGuardReady } from "../lib/wireguard.js";
 import { getOutputs, terraform } from "../lib/terraform.js";
 import { errorMessage, hasCommand } from "../lib/shell.js";
 import { ensureSshKeyPair } from "../lib/ssh-key.js";
-import { error, info, success, warn } from "../lib/console.js";
+import { error, info, warn } from "../lib/console.js";
 import { startHealthChecks } from "../lib/health.js";
 import { connectLocalClient, disconnectLocalClient } from "../lib/local-client.js";
 import pc from "picocolors";
@@ -50,13 +50,13 @@ export async function up() {
         },
       },
       {
-        title: "Connect local tunnel",
+        title: "Connecting local tunnel",
         task: async () => {
           await connectLocalClient();
         },
       },
     ],
-    { concurrent: false, exitOnError: true },
+    { concurrent: false, exitOnError: true, renderer: "default" },
   );
 
   try {
@@ -89,13 +89,14 @@ async function showReadySummary() {
   const endpointLine = `${outputs.serverIp}:51820`;
 
   info("");
-  success(pc.bold("✓ VPN is ready"));
-  info("");
-  info(`  ${pc.dim("Server")}    ${serverLine}`);
-  info(`  ${pc.dim("Region")}    sa-east-1`);
-  info(`  ${pc.dim("Endpoint")}  ${endpointLine}`);
-  info("");
-  info(`  Run ${pc.cyan("npm run vpn:down")} to terminate.`);
+  console.log(`  ┌  ${pc.green(pc.bold("✓ VPN is ready"))}`);
+  console.log("  │");
+  console.log(`  │  ${pc.dim("Server")}    ${serverLine}`);
+  console.log(`  │  ${pc.dim("Region")}    sa-east-1`);
+  console.log(`  │  ${pc.dim("Endpoint")}  ${endpointLine}`);
+  console.log("  │");
+  console.log(`  │  ${pc.dim("Run")} ${pc.cyan("npm run vpn:down")} ${pc.dim("to terminate.")}`);
+  console.log("  └");
   info("");
 }
 

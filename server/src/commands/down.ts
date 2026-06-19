@@ -1,13 +1,13 @@
 import { Listr } from "listr2";
+import pc from "picocolors";
 import { terraform } from "../lib/terraform.js";
 import { disconnectLocalClient } from "../lib/local-client.js";
-import { success } from "../lib/console.js";
 
 export async function down() {
   const tasks = new Listr(
     [
       {
-        title: "Disconnect local tunnel",
+        title: "Disconnecting local tunnel",
         task: async () => {
           // Local teardown is best-effort: the tunnel may already be down
           // (user never ran vpn:connect, or ran vpn:disconnect earlier), or
@@ -15,8 +15,8 @@ export async function down() {
           // terraform destroy — that's the only way to stop AWS charges.
           try {
             await disconnectLocalClient();
-          } catch (err) {
-            //warn(`Skipping local tunnel teardown: ${errorMessage(err)}`);
+          } catch {
+            // Best-effort; skip silently.
           }
         },
       },
@@ -27,12 +27,19 @@ export async function down() {
         },
       },
     ],
-    { concurrent: false, exitOnError: true },
+    { concurrent: false, exitOnError: true, renderer: "default" },
   );
 
   try {
     await tasks.run();
-    success("\n✓ VPN teardown complete\n");
+
+    console.log("");
+    console.log(`  ┌  ${pc.green(pc.bold("✓ VPN teardown complete"))}`);
+    console.log("  │");
+    console.log(`  │  ${pc.dim("All AWS resources destroyed.")}`);
+    console.log(`  │  ${pc.dim("Local tunnel disconnected.")}`);
+    console.log("  └");
+    console.log("");
   } catch {
     // listr2 already rendered the failure inline under the failed task.
     // Just exit non-zero.

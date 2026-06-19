@@ -2,7 +2,7 @@ import { Listr } from "listr2";
 import pc from "picocolors";
 import { errorMessage, run } from "../lib/shell.js";
 import { getOutputs } from "../lib/terraform.js";
-import { info, warn } from "../lib/console.js";
+import { warn } from "../lib/console.js";
 import { ssh } from "../lib/wireguard.js";
 
 type Outputs = { serverIp: string; sshUser: string; sshPrivateKeyPath: string };
@@ -45,7 +45,7 @@ export async function status() {
         },
       },
     ],
-    { concurrent: false, exitOnError: true },
+    { concurrent: false, exitOnError: true, renderer: "default" },
   );
 
   try {
@@ -65,20 +65,26 @@ function showSummary(state: {
   publicLocation?: string;
   wgStatus?: string;
 }) {
-  info("");
+  console.log("");
+  console.log(`  ┌  ${pc.green(pc.bold("✓ VPN status"))}`);
+  console.log("  │");
+
   if (state.outputs) {
-    info(`  ${pc.dim("Server")}     ${state.outputs.sshUser}@${state.outputs.serverIp}`);
+    console.log(`  │  ${pc.dim("Server")}     ${state.outputs.sshUser}@${state.outputs.serverIp}`);
   }
   if (state.publicIp) {
     const loc = state.publicLocation ? ` (${state.publicLocation})` : "";
-    info(`  ${pc.dim("Public IP")}  ${state.publicIp}${loc}`);
+    console.log(`  │  ${pc.dim("Public IP")}  ${state.publicIp}${loc}`);
   }
+
   if (state.wgStatus) {
-    info("");
-    info(pc.dim("  WireGuard"));
+    console.log("  │");
+    console.log(`  │  ${pc.dim("WireGuard")}`);
     for (const line of state.wgStatus.split("\n")) {
-      if (line.trim()) info(`  ${line}`);
+      if (line.trim()) console.log(`  │    ${line}`);
     }
   }
-  info("");
+
+  console.log("  └");
+  console.log("");
 }
