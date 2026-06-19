@@ -120,6 +120,29 @@ Make sure to destory all resources after use to avoid any **unexpected costs**
 npm run vpn:down
 ```
 
+### Screen Shots! 
+<table>
+<tr>
+<th>vpn:up</th>
+<th>vpn:down</th>
+<th>vpn:status</th>
+</tr>
+<tr>
+<td>
+<img width="950" height="654" alt="Screenshot 2026-06-19 at 10-36-32" src="https://github.com/user-attachments/assets/40cff30f-4a31-44fd-b81b-4fedfa0e4e8b" />
+</td>
+<td>
+<img width="937" height="308" alt="Screenshot 2026-06-19 at 10-38-03" src="https://github.com/user-attachments/assets/00c87e10-3809-4883-a6be-29b840a8b650" />
+
+</td>
+<td>
+<img width="941" height="546" alt="Screenshot 2026-06-19 at 10-35-28" src="https://github.com/user-attachments/assets/711679a7-6b4c-4f39-8b79-4c240f40f202" />
+
+
+</td>
+</tr>
+</table>
+
 **Pro Tip**
 
 Use these browser extensions for a cleaner viewing experience:
