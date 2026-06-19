@@ -1,8 +1,7 @@
 import { Listr } from "listr2";
 import { terraform } from "../lib/terraform.js";
 import { disconnectLocalClient } from "../lib/local-client.js";
-import { errorMessage } from "../lib/shell.js";
-import { success, warn } from "../lib/console.js";
+import { success } from "../lib/console.js";
 
 export async function down() {
   const tasks = new Listr(
