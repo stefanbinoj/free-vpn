@@ -95,7 +95,7 @@ async function showReadySummary() {
 
 function registerCleanupReminder() {
   const remind = () => {
-    console.log(`${pc.dim("Run")} ${pc.cyan("npm run vpn:down")} ${pc.dim("to terminate the EC2 instance and disconnect the local tunnel.")}`);
+    console.log(`\n${pc.dim("Run")} ${pc.cyan("npm run vpn:down")} ${pc.dim("to terminate the EC2 instance and disconnect the local tunnel.")}`);
     process.exit(0);
   };
 
