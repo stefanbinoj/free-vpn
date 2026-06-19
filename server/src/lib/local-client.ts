@@ -12,7 +12,7 @@ function ignoreAlreadyDown(error: unknown): boolean {
   return ALREADY_DOWN_PATTERN.test(errorMessage(error));
 }
 
-export function connectLocalClient() {
+export async function connectLocalClient(): Promise<void> {
   const os = platform();
 
   if (os === "darwin" || os === "linux") {
@@ -20,7 +20,7 @@ export function connectLocalClient() {
       throw new Error("wg-quick is required to connect this device. Install WireGuard tools.");
     }
 
-    run("sudo", ["wg-quick", "up", clientConfigPath]);
+    await run("sudo", ["wg-quick", "up", clientConfigPath], { quiet: true });
     return;
   }
 
@@ -29,16 +29,16 @@ export function connectLocalClient() {
       throw new Error("wireguard.exe is required to connect this Windows device. Install the official WireGuard app and add it to PATH.");
     }
 
-    run("wireguard.exe", ["/installtunnelservice", clientConfigPath]);
+    await run("wireguard.exe", ["/installtunnelservice", clientConfigPath], { quiet: true });
     return;
   }
 
   throw new Error(`Automatic local VPN connect is not implemented for this OS: ${os}`);
 }
 
-function runTeardown(command: string, args: string[]) {
+async function runTeardown(command: string, args: string[]): Promise<void> {
   try {
-    run(command, args);
+    await run(command, args, { quiet: true });
   } catch (error) {
     if (ignoreAlreadyDown(error)) {
       return;
@@ -47,15 +47,15 @@ function runTeardown(command: string, args: string[]) {
   }
 }
 
-export function disconnectLocalClient() {
+export async function disconnectLocalClient(): Promise<void> {
   const os = platform();
 
   if ((os === "darwin" || os === "linux") && hasCommand("wg-quick")) {
-    runTeardown("sudo", ["wg-quick", "down", clientConfigPath]);
+    await runTeardown("sudo", ["wg-quick", "down", clientConfigPath]);
     return;
   }
 
   if (os === "win32" && hasCommand("wireguard.exe")) {
-    runTeardown("wireguard.exe", ["/uninstalltunnelservice", basename(clientConfigPath, ".conf")]);
+    await runTeardown("wireguard.exe", ["/uninstalltunnelservice", basename(clientConfigPath, ".conf")]);
   }
 }

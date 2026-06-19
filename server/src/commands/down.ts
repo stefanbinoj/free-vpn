@@ -15,15 +15,16 @@ export async function down() {
           // sudo credentials may be unavailable. Never let it block the
           // terraform destroy — that's the only way to stop AWS charges.
           try {
-            disconnectLocalClient();
+            await disconnectLocalClient();
           } catch (err) {
+            //warn(`Skipping local tunnel teardown: ${errorMessage(err)}`);
           }
         },
       },
       {
         title: "Destroy AWS infrastructure",
         task: async () => {
-          terraform(["destroy", "-auto-approve"]);
+          await terraform(["destroy", "-auto-approve"]);
         },
       },
     ],

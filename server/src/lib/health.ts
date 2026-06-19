@@ -5,13 +5,13 @@ import { ssh } from "./wireguard.js";
 
 const intervalMs = 15000
 
-export function startHealthChecks() {
-  const outputs = getOutputs();
+export async function startHealthChecks() {
+  const outputs = await getOutputs();
   info(`Running Health Check for: ${outputs.serverIp}. Run \`npm run vpn:down\` to destroy resources.`);
 
-  const check = () => {
+  const check = async () => {
     try {
-      const latestHandshake = ssh(
+      const latestHandshake = await ssh(
         [],
         "sudo wg show wg0 latest-handshakes | awk '{print $2}' | sort -nr | head -1",
       );
@@ -25,8 +25,8 @@ export function startHealthChecks() {
     }
   };
 
-  check();
-  const timer = setInterval(check, intervalMs);
+  await check();
+  const timer = setInterval(() => { void check(); }, intervalMs);
 
   return () => clearInterval(timer);
 }

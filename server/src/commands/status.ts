@@ -20,14 +20,14 @@ export async function status() {
       {
         title: "Get server info",
         task: async () => {
-          state.outputs = getOutputs();
+          state.outputs = await getOutputs();
         },
       },
       {
         title: "Fetch public IP",
         task: async (_ctx, task) => {
           try {
-            const result = run("curl", ["-s", "ipinfo.io"], { quiet: true });
+            const result = await run("curl", ["-s", "ipinfo.io"], { quiet: true });
             const data = JSON.parse(result);
             state.publicIp = data.ip;
             state.publicLocation = `${data.city}, ${data.country}`;
@@ -41,7 +41,7 @@ export async function status() {
       {
         title: "Get WireGuard status",
         task: async () => {
-          state.wgStatus = ssh([], "sudo wg show wg0");
+          state.wgStatus = await ssh([], "sudo wg show wg0");
         },
       },
     ],

@@ -26,7 +26,7 @@ export async function ensureSshKeyPair() {
   }
 
   if (hasPrivateKey && !hasPublicKey) {
-    const publicKey = run("ssh-keygen", ["-y", "-f", sshPrivateKeyPath], { quiet: true });
+    const publicKey = await run("ssh-keygen", ["-y", "-f", sshPrivateKeyPath], { quiet: true });
     writeFileSync(sshPublicKeyPath, `${publicKey}\n`, { mode: 0o644 });
     await normalizeSshKeyPermissions();
     return;
@@ -39,7 +39,7 @@ export async function ensureSshKeyPair() {
   }
 
   info(`Creating SSH key pair at ${sshPrivateKeyPath}`);
-  run("ssh-keygen", ["-t", "ed25519", "-f", sshPrivateKeyPath, "-C", "fifa-vpn", "-N", ""]);
+  await run("ssh-keygen", ["-t", "ed25519", "-f", sshPrivateKeyPath, "-C", "fifa-vpn", "-N", ""]);
   await normalizeSshKeyPermissions();
 }
 

@@ -23,13 +23,13 @@ export async function up() {
       {
         title: "Initialize Terraform",
         task: async () => {
-          terraform(["init"]);
+          await terraform(["init"]);
         },
       },
       {
         title: "Provision EC2 instance",
         task: async () => {
-          terraform(["apply", "-auto-approve"]);
+          await terraform(["apply", "-auto-approve"]);
         },
       },
       {
@@ -40,18 +40,19 @@ export async function up() {
               task.title = text;
             },
           });
+          task.title = "WireGuard server is ready";
         },
       },
       {
         title: "Generate client config",
         task: async () => {
-          configureClient();
+          await configureClient();
         },
       },
       {
         title: "Connect local tunnel",
         task: async () => {
-          connectLocalClient();
+          await connectLocalClient();
         },
       },
     ],
@@ -65,24 +66,25 @@ export async function up() {
     // Run cleanup, then exit non-zero (no need to re-throw or re-print).
     error("Setup failed. Destroying any created AWS resources...");
     try {
-      disconnectLocalClient();
+      await disconnectLocalClient();
     } catch (disconnectError) {
+      //warn(`Skipping local tunnel teardown: ${errorMessage(disconnectError)}`);
     }
     try {
-      terraform(["destroy", "-auto-approve"]);
+      await terraform(["destroy", "-auto-approve"]);
     } catch (destroyError) {
       warn(`Cleanup warning: ${errorMessage(destroyError)}`);
     }
     process.exit(1);
   }
 
-  showReadySummary();
+  await showReadySummary();
   startHealthChecks();
   registerCleanupReminder();
 }
 
-function showReadySummary() {
-  const outputs = getOutputs();
+async function showReadySummary() {
+  const outputs = await getOutputs();
   const serverLine = `${outputs.sshUser}@${outputs.serverIp}`;
   const endpointLine = `${outputs.serverIp}:51820`;
 

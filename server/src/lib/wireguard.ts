@@ -7,8 +7,8 @@ import { getOutputs } from "./terraform.js";
 export const wireguardPort = 51820;
 const clientVpnIp = "10.8.0.2/32";
 
-export function ssh(args: string[], remoteCommand: string): string {
-  const { serverIp, sshUser, sshPrivateKeyPath } = getOutputs();
+export async function ssh(args: string[], remoteCommand: string): Promise<string> {
+  const { serverIp, sshUser, sshPrivateKeyPath } = await getOutputs();
   return run(
     "ssh",
     [
@@ -34,7 +34,7 @@ export async function waitForWireGuardReady(
 
   while (Date.now() - startedAt < timeoutMs) {
     try {
-      const progress = ssh(
+      const progress = await ssh(
         [
           "-o",
           "ConnectTimeout=5",
@@ -73,17 +73,17 @@ export async function waitForWireGuardReady(
   throw new Error(`Timed out waiting for WireGuard server readiness.\n${lastError}`);
 }
 
-export function configureClient(): void {
+export async function configureClient(): Promise<void> {
   if (!hasCommand("wg")) {
     throw new Error("wg is required locally to generate WireGuard keys. Install wireguard-tools.");
   }
 
-  const outputs = getOutputs();
-  const privateKey = run("wg", ["genkey"], { quiet: true });
-  const publicKey = run("wg", ["pubkey"], { input: `${privateKey}\n`, quiet: true });
-  const serverPublicKey = ssh([], "sudo cat /etc/wireguard/server_public.key");
+  const outputs = await getOutputs();
+  const privateKey = await run("wg", ["genkey"], { quiet: true });
+  const publicKey = await run("wg", ["pubkey"], { input: `${privateKey}\n`, quiet: true });
+  const serverPublicKey = await ssh([], "sudo cat /etc/wireguard/server_public.key");
 
-  ssh(
+  await ssh(
     [],
     [
       "sudo wg set wg0 peer",
