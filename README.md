@@ -51,7 +51,7 @@ Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil **(Br
    <details>
    <summary>Windows</summary>
 
-   *Download and run the official installer from https://download.wireguard.com/windows-client/wireguard-installer.exe. `wg.exe` is installed under `C:\Program Files\WireGuard\` — add this folder to your `PATH` to use it from any terminal, or call it by full path.*
+   *Download and run the official installer from https://download.wireguard.com/windows-client/wireguard-installer.exe. Make sure running `wireguard.exe` in promptshell opens wireguard application. (or else ask chatgpt to add wireguard to path and verify `which wg wireguard` both works)*
 
    </details>
 
