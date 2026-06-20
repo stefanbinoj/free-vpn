@@ -1,4 +1,6 @@
-import { spawn, spawnSync, SpawnOptions } from "node:child_process";
+import { spawn, SpawnOptions } from "node:child_process";
+import { existsSync, statSync } from "node:fs";
+import { delimiter, join, parse } from "node:path";
 
 type RunOptions = {
   cwd?: string;
@@ -88,12 +90,54 @@ export function run(command: string, args: string[], options: RunOptions = {}): 
 }
 
 export function hasCommand(command: string): boolean {
-  const result = spawnSync("sh", ["-lc", `command -v ${command}`], {
-    encoding: "utf8",
-    stdio: "ignore",
-  });
+  // Absolute or relative path: check the file directly. Don't require execute
+  // bit — PATHEXT-style callers (e.g. "wireguard.exe") should resolve as long
+  // as the file exists; spawn will fail later if it isn't actually runnable.
+  if (parse(command).dir || command.includes("/") || command.includes("\\")) {
+    try {
+      return statSync(command).isFile();
+    } catch {
+      return false;
+    }
+  }
 
-  return result.status === 0;
+  const dirs = (process.env.PATH ?? "").split(delimiter).filter(Boolean);
+  if (dirs.length === 0) return false;
+
+  const isWindows = process.platform === "win32";
+  const lowerCommand = command.toLowerCase();
+  const exts = isWindows
+    ? (process.env.PATHEXT ?? ".EXE;.BAT;.CMD;.COM").split(";")
+    : [""];
+
+  for (const dir of dirs) {
+    // 1) Try the command as-is. Handles names that already include an
+    //    extension (e.g. "wireguard.exe", "wg.exe") and bare names too
+    //    (e.g. "terraform", where the file is literally "terraform").
+    const direct = join(dir, command);
+    if (existsSync(direct) && isRegularFile(direct)) return true;
+
+    // 2) On Windows, also try appending each PATHEXT extension. Skip any
+    //    extension the command already ends with (case-insensitive) so we
+    //    don't generate nonsense like "wireguard.exe.EXE".
+    if (isWindows) {
+      for (const ext of exts) {
+        if (!ext || lowerCommand.endsWith(ext.toLowerCase())) continue;
+        const candidate = join(dir, command + ext);
+        if (existsSync(candidate) && isRegularFile(candidate)) return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function isRegularFile(p: string): boolean {
+  try {
+    return statSync(p).isFile();
+  } catch {
+    return false;
+  }
 }
 
 export function errorMessage(error: unknown): string {
