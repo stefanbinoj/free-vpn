@@ -1,5 +1,37 @@
+# ----------------------------------------------------------------------------
+# AWS — VPN exit node in São Paulo (sa-east-1).
+#
+# This directory is a self-contained terraform working directory.
+# To switch providers: `terraform destroy` here first, then `cd ../azure`
+# (or gcp / do) and `terraform init && terraform apply`.
+# ----------------------------------------------------------------------------
+
 provider "aws" {
   region = var.region
+
+  # Don't talk to AWS at init time — only when a resource needs it.
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_region_validation      = true
+  skip_requesting_account_id  = true
+}
+
+locals {
+  instance_name       = "fifa-vpn-brazil"
+  ssh_public_key_path = pathexpand("~/.ssh/fifa-vpn.pub")
+  wireguard_port      = 51820
+  server_vpn_ip       = "10.8.0.1/24"
+
+  common_tags = {
+    Name      = local.instance_name
+    Project   = "fifa-vpn"
+    ManagedBy = "terraform"
+  }
+
+  cloud_init_data = templatefile("${path.module}/../cloud-init.yaml", {
+    vpn_port      = local.wireguard_port
+    server_vpn_ip = local.server_vpn_ip
+  })
 }
 
 data "aws_ssm_parameter" "ubuntu_amd64" {
@@ -8,18 +40,6 @@ data "aws_ssm_parameter" "ubuntu_amd64" {
 
 data "aws_availability_zones" "available" {
   state = "available"
-}
-
-locals {
-  instance_name       = "fifa-vpn-brazil"
-  ssh_public_key_path = pathexpand("~/.ssh/fifa-vpn.pub")
-  wireguard_port      = 51820
-  server_vpn_ip       = "10.8.0.1/24"
-  common_tags = {
-    Name      = local.instance_name
-    Project   = "fifa-vpn"
-    ManagedBy = "terraform"
-  }
 }
 
 resource "aws_key_pair" "vpn" {
@@ -117,23 +137,7 @@ resource "aws_instance" "vpn" {
   associate_public_ip_address = true
   source_dest_check           = false
 
-  dynamic "instance_market_options" {
-    for_each = var.use_spot ? [1] : []
-
-    content {
-      market_type = "spot"
-
-      spot_options {
-        instance_interruption_behavior = "terminate"
-        spot_instance_type             = "one-time"
-      }
-    }
-  }
-
-  user_data = templatefile("${path.module}/cloud-init.yaml", {
-    vpn_port      = local.wireguard_port
-    server_vpn_ip = local.server_vpn_ip
-  })
+  user_data = local.cloud_init_data
 
   metadata_options {
     http_endpoint = "enabled"
@@ -148,4 +152,19 @@ resource "aws_instance" "vpn" {
   }
 
   tags = local.common_tags
+}
+
+output "server_ip" {
+  description = "Public IPv4 address of the VPN server."
+  value       = aws_instance.vpn.public_ip
+}
+
+output "ssh_user" {
+  description = "SSH username for the VPN server."
+  value       = "ubuntu"
+}
+
+output "ssh_private_key_path" {
+  description = "Expected matching private key path for local SSH."
+  value       = trimsuffix(pathexpand("~/.ssh/fifa-vpn.pub"), ".pub")
 }

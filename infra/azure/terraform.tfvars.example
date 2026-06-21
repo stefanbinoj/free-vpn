@@ -1,0 +1,3 @@
+# Azure — Brazil South, free-tier Standard_B1s.
+region        = "brazilsouth"
+instance_type = "Standard_B1s"

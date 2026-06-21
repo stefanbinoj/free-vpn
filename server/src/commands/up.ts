@@ -26,8 +26,8 @@ export async function up() {
         task: withTiming("Initialize Terraform", () => terraform(["init"])),
       },
       {
-        title: "Provision EC2 instance",
-        task: withTiming("Provision EC2 instance", () => terraform(["apply", "-auto-approve"])),
+        title: "Provision VPN instance",
+        task: withTiming("Provision VPN instance", () => terraform(["apply", "-auto-approve"])),
       },
       {
         title: "Wait for WireGuard server",
@@ -57,7 +57,7 @@ export async function up() {
   } catch {
     // listr2 already rendered the failure inline under the failed task.
     // Run cleanup, then exit non-zero (no need to re-throw or re-print).
-    error("Setup failed. Destroying any created AWS resources...");
+    error("Setup failed. Destroying any created cloud resources...");
     try {
       await disconnectLocalClient();
     } catch (disconnectError) {
@@ -85,7 +85,6 @@ async function showReadySummary() {
   console.log(`  ┌  ${pc.green(pc.bold("✓ VPN is ready"))}`);
   console.log("  │");
   console.log(`  │  ${pc.dim("Server")}    ${serverLine}`);
-  console.log(`  │  ${pc.dim("Region")}    sa-east-1`);
   console.log(`  │  ${pc.dim("Endpoint")}  ${endpointLine}`);
   console.log("  │");
   console.log(`  │  ${pc.dim("Run")} ${pc.cyan("npm run vpn:down")} ${pc.dim("to terminate.")}`);
@@ -95,7 +94,7 @@ async function showReadySummary() {
 
 function registerCleanupReminder() {
   const remind = () => {
-    console.log(`\n${pc.dim("Run")} ${pc.cyan("npm run vpn:down")} ${pc.dim("to terminate the EC2 instance and disconnect the local tunnel.")}`);
+    console.log(`\n${pc.dim("Run")} ${pc.cyan("npm run vpn:down")} ${pc.dim("to terminate the cloud instance and disconnect the local tunnel.")}`);
     process.exit(0);
   };
 

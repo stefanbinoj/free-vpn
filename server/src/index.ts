@@ -20,12 +20,12 @@ program
 
 program
   .command("up")
-  .description("Provision AWS infrastructure and connect this device to the VPN.")
+  .description("Provision cloud infrastructure and connect this device to the VPN.")
   .action(up);
 
 program
   .command("down")
-  .description("Disconnect this device and destroy AWS infrastructure.")
+  .description("Disconnect this device and destroy cloud infrastructure.")
   .action(down);
 
 program

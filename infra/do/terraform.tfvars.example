@@ -1,0 +1,3 @@
+# DigitalOcean — nyc1 region, cheapest basic droplet.
+region        = "nyc1"
+instance_type = "s-1vcpu-512mb-10gb"

@@ -12,6 +12,10 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
+# Real values files are local — keep the *.tfvars.example templates tracked.
+*.tfvars
+!*.tfvars.example
+
 *.pem
 *.key
 *.conf
