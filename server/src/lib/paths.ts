@@ -1,7 +1,10 @@
+import { config } from "dotenv";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+
+config({ path: resolve(repoRoot, ".env"), quiet: true });
 
 // Pick the terraform working directory based on CLOUD_PROVIDER in the env.
 // Each provider lives in its own subdirectory under infra/ — see

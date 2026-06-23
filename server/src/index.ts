@@ -1,5 +1,3 @@
-import { config } from "dotenv";
-import { resolve } from "node:path";
 import { Command } from "commander";
 import { connect } from "./commands/connect.js";
 import { disconnect } from "./commands/disconnect.js";
@@ -7,10 +5,6 @@ import { down } from "./commands/down.js";
 import { status } from "./commands/status.js";
 import { up } from "./commands/up.js";
 import { error as logError } from "./lib/console.js";
-import { repoRoot } from "./lib/paths.js";
-
-config({ path: resolve(repoRoot, ".env") });
-
 const program = new Command();
 
 program
