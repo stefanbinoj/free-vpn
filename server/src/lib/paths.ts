@@ -24,7 +24,7 @@ export const infraDir = resolve(repoRoot, "infra", cloudProvider);
 const REQUIRED_ENV: Record<CloudProvider, readonly string[]> = {
   aws: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
   azure: ["ARM_SUBSCRIPTION_ID", "ARM_CLIENT_ID", "ARM_CLIENT_SECRET", "ARM_TENANT_ID"],
-  gcp: ["GOOGLE_CREDENTIALS", "GOOGLE_PROJECT"],
+  gcp: ["GOOGLE_APPLICATION_CREDENTIALS", "GOOGLE_PROJECT"],
   do: ["DIGITALOCEAN_TOKEN"],
 };
 
