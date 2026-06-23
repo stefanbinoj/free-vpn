@@ -5,7 +5,7 @@
 # To switch providers: `terraform destroy` in the other provider's dir first,
 # then `cd ../gcp && terraform init && terraform apply`.
 #
-# Auth: GOOGLE_CREDENTIALS (path to service-account JSON) + GOOGLE_PROJECT
+# Auth: GOOGLE_APPLICATION_CREDENTIALS (path to service-account JSON) + GOOGLE_PROJECT
 # ----------------------------------------------------------------------------
 
 provider "google" {
