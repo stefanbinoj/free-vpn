@@ -1,7 +1,7 @@
 variable "region" {
-  description = "DigitalOcean region slug for the VPN exit node (e.g. nyc1, sfo1, ams3)."
+  description = "DigitalOcean region slug for the VPN exit node (e.g. sao1, nyc1, sfo3)."
   type        = string
-  default     = "nyc1"
+  default     = "sao1"
 }
 
 variable "instance_type" {
