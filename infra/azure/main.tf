@@ -100,12 +100,17 @@ resource "azurerm_network_interface" "vpn" {
   }
 }
 
+resource "azurerm_network_interface_security_group_association" "vpn" {
+  network_interface_id      = azurerm_network_interface.vpn.id
+  network_security_group_id = azurerm_network_security_group.vpn.id
+}
+
 resource "azurerm_linux_virtual_machine" "vpn" {
-  name                           = local.instance_name
-  resource_group_name            = azurerm_resource_group.vpn.name
-  location                       = azurerm_resource_group.vpn.location
-  size                           = var.instance_type
-  admin_username                 = "azureuser"
+  name                            = local.instance_name
+  resource_group_name             = azurerm_resource_group.vpn.name
+  location                        = azurerm_resource_group.vpn.location
+  size                            = var.instance_type
+  admin_username                  = "azureuser"
   disable_password_authentication = true
 
   network_interface_ids = [

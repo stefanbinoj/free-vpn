@@ -7,6 +7,7 @@ import { error, info, warn } from "../lib/console.js";
 import { withTiming } from "../lib/listr-utils.js";
 import { startHealthChecks } from "../lib/health.js";
 import { connectLocalClient, disconnectLocalClient } from "../lib/local-client.js";
+import { assertProviderEnv } from "../lib/paths.js";
 import pc from "picocolors";
 
 export async function up() {
@@ -17,6 +18,7 @@ export async function up() {
     throw new Error("wg is required locally to generate WireGuard keys. Install wireguard-tools.");
   }
 
+  assertProviderEnv();
   await ensureSshKeyPair();
 
   const tasks = new Listr(

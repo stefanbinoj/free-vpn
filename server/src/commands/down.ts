@@ -2,9 +2,11 @@ import { Listr } from "listr2";
 import pc from "picocolors";
 import { terraform } from "../lib/terraform.js";
 import { disconnectLocalClient } from "../lib/local-client.js";
+import { assertProviderEnv } from "../lib/paths.js";
 import { withTiming } from "../lib/listr-utils.js";
 
 export async function down() {
+  assertProviderEnv();
   const tasks = new Listr(
     [
       {

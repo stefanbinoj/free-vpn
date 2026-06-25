@@ -37,8 +37,12 @@ export async function connectLocalClient(): Promise<void> {
 }
 
 async function runTeardown(command: string, args: string[]): Promise<void> {
+  // Bound the sudo password wait at 10s so a missing/unattended credential
+  // doesn't stall vpn:down before terraform destroy. The caller in down.ts
+  // already swallows teardown errors and continues to destroy cloud infra,
+  // so a timeout here naturally falls through to that cleanup.
   try {
-    await run(command, args, { quiet: true, timeoutMs: 0 });
+    await run(command, args, { quiet: true, timeoutMs: 10_000 });
   } catch (error) {
     if (ignoreAlreadyDown(error)) {
       return;

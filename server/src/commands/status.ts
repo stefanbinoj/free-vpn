@@ -5,10 +5,12 @@ import { getOutputs } from "../lib/terraform.js";
 import { warn } from "../lib/console.js";
 import { withTiming } from "../lib/listr-utils.js";
 import { ssh } from "../lib/wireguard.js";
+import { assertProviderEnv } from "../lib/paths.js";
 
 type Outputs = { serverIp: string; sshUser: string; sshPrivateKeyPath: string };
 
 export async function status() {
+  assertProviderEnv();
   const state: {
     outputs?: Outputs;
     publicIp?: string;

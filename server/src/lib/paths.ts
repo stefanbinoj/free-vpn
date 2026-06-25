@@ -31,7 +31,7 @@ const REQUIRED_ENV: Record<CloudProvider, readonly string[]> = {
   do: ["DIGITALOCEAN_TOKEN"],
 };
 
-function assertProviderEnv(provider: CloudProvider): void {
+function assertProviderEnvImpl(provider: CloudProvider): void {
   const missing = REQUIRED_ENV[provider].filter((key) => !process.env[key]?.trim());
   if (missing.length > 0) {
     const lines = [
@@ -43,7 +43,12 @@ function assertProviderEnv(provider: CloudProvider): void {
   }
 }
 
-assertProviderEnv(cloudProvider);
+// Explicit, not at module-import time — pure-local commands (vpn:connect,
+// vpn:disconnect) only need clientConfigPath and shouldn't fail when
+// Terraform credentials aren't configured.
+export function assertProviderEnv(provider: CloudProvider = cloudProvider): void {
+  assertProviderEnvImpl(provider);
+}
 
 export const configsDir = resolve(repoRoot, "configs");
 export const clientConfigPath = resolve(configsDir, "wg-client.conf");
