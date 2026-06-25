@@ -1,6 +1,6 @@
 # Self-Hosted VPN (for watching FIFA highlights via yt)
 
-Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil **(Bring Your Own Cloud)** version. Almost zero cost.
+Personal WireGuard VPN that runs on a temporary cloud instance (AWS / Azure / GCP / DigitalOcean) for exit IP in Brazil **(Bring Your Own Cloud)** version. Almost zero cost.
 
 <img
   src="https://github.com/user-attachments/assets/247b39d8-f248-4cc1-a4a8-f687c15f9de8"
@@ -8,6 +8,11 @@ Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil **(Br
   width="70%"
   style="max-width:100%; height:auto;"
 />
+
+> **Cloud provider:** Targets AWS / Azure / GCP / DigitalOcean. Each provider
+> lives in its own `infra/<provider>/` directory. Set `CLOUD_PROVIDER` in `.env`
+> and fill in the matching credentials block — the CLI picks the right
+> directory automatically.
 
 ## Setup
 
@@ -63,19 +68,35 @@ Personal WireGuard VPN that runs on a temporary AWS EC2 instance in Brazil **(Br
    ```
 
    </details>
-4. Configure AWS credentials locally.
+4. Configure cloud credentials locally.
+
+   `.env.example` lists the env vars per provider — only the ones matching
+   `CLOUD_PROVIDER` are actually used.
+
+   <details>
+   <summary>AWS (default)</summary>
 
    Go to AWS console > IAM > Create User > Attach policies directly > Add `AmazonEC2FullAccess, AmazonSSMReadOnlyAccess` > Create user > Security credentials tab > Create access key > Show access key > Copy Access Key ID and Secret Access Key.
 
    ```bash
    cp .env.example .env
 
-
-   # Add these credentails to .env
-   AWS_ACCESS_KEY_ID=your-access-key-id
-   AWS_SECRET_ACCESS_KEY=your-secret-access-key
-   AWS_DEFAULT_REGION=sa-east-1
+   # CLOUD_PROVIDER=aws
+   # AWS_ACCESS_KEY_ID=...
+   # AWS_SECRET_ACCESS_KEY=...
    ```
+
+   </details>
+
+   <details>
+   <summary>Azure / GCP / DigitalOcean</summary>
+
+   Uncomment the matching block in `.env` and fill in your credentials. Set
+   `CLOUD_PROVIDER=azure` / `gcp` / `do`. The CLI will run terraform in
+   `infra/<provider>/`. Region and instance type live in
+   `infra/<provider>/terraform.tfvars`.
+
+   </details>
 
 ## Run
 
@@ -89,7 +110,7 @@ npm install
 **(Optional):** The Terraform config works out of the box. If you need any further custom configs, follow this step.
 
 ```bash
-cd ../infra
+cd ../infra/<provider>     # aws / azure / gcp / do
 cp terraform.tfvars.example terraform.tfvars
 ```
 
@@ -104,7 +125,7 @@ curl ipinfo.io
 ```
 
 <details>
-<summary>This creates the VPN server in brazil region of AWS, generates `configs/wg-client.conf`, and connects the current device.</summary>
+<summary>This runs terraform in `infra/<CLOUD_PROVIDER>/`, generates `configs/wg-client.conf`, and connects the current device.</summary>
 
 macOS / Linux: uses `sudo wg-quick up configs/wg-client.conf`
 Windows: uses `wireguard.exe /installtunnelservice`

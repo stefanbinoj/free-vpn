@@ -2,9 +2,11 @@ import { Listr } from "listr2";
 import pc from "picocolors";
 import { terraform } from "../lib/terraform.js";
 import { disconnectLocalClient } from "../lib/local-client.js";
+import { assertProviderEnv } from "../lib/paths.js";
 import { withTiming } from "../lib/listr-utils.js";
 
 export async function down() {
+  assertProviderEnv();
   const tasks = new Listr(
     [
       {
@@ -13,7 +15,7 @@ export async function down() {
           // Local teardown is best-effort: the tunnel may already be down
           // (user never ran vpn:connect, or ran vpn:disconnect earlier), or
           // sudo credentials may be unavailable. Never let it block the
-          // terraform destroy — that's the only way to stop AWS charges.
+          // terraform destroy — that's the only way to stop cloud charges.
           try {
             await disconnectLocalClient();
           } catch {
@@ -22,8 +24,8 @@ export async function down() {
         }),
       },
       {
-        title: "Destroy AWS infrastructure",
-        task: withTiming("Destroy AWS infrastructure", () =>
+        title: "Destroy cloud infrastructure",
+        task: withTiming("Destroy cloud infrastructure", () =>
           terraform(["destroy", "-auto-approve"]),
         ),
       },
@@ -37,7 +39,7 @@ export async function down() {
     console.log("");
     console.log(`  ┌  ${pc.green(pc.bold("✓ VPN teardown complete"))}`);
     console.log("  │");
-    console.log(`  │  ${pc.dim("All AWS resources destroyed.")}`);
+    console.log(`  │  ${pc.dim("All cloud resources destroyed.")}`);
     console.log(`  │  ${pc.dim("Local tunnel disconnected.")}`);
     console.log("  └");
     console.log("");

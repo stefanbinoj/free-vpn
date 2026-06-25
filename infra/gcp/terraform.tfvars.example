@@ -1,0 +1,3 @@
+# GCP — South America (São Paulo), free-tier e2-micro.
+region        = "southamerica-east1"
+instance_type = "e2-micro"

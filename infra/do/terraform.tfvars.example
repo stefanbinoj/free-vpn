@@ -1,0 +1,3 @@
+# DigitalOcean — São Paulo (sao1) region, cheapest basic droplet.
+region        = "sao1"
+instance_type = "s-1vcpu-512mb-10gb"
